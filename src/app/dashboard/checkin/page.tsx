@@ -725,7 +725,13 @@ export default function FrontDeskScannerPage() {
                       </td>
                       <td className="py-3 px-3">
                         <div className="font-bold text-zinc-200">{tx.title}</div>
-                        <div className="text-[10px] text-zinc-400">{tx.details || "Membership / PT Session"}</div>
+                        <div className="text-[10px] text-zinc-400">
+                          {tx.details?.coach_name
+                            ? `${tx.details.coach_name} (${tx.details.sessions_count || 12} Sesi)`
+                            : tx.details?.package_type
+                            ? `Paket ${tx.details.package_type}`
+                            : "Membership / PT Session"}
+                        </div>
                       </td>
                       <td className="py-3 px-3">
                         <div className="font-black text-neon text-sm">{formatRupiah(tx.amount)}</div>

@@ -801,11 +801,11 @@ export default function CustomerPortalPage() {
                   <h3 className="text-base font-black text-white flex items-center gap-2">
                     <span>Langkah 2: Mau Pakai Coach Siapa? (Personal Trainer Angkat Beban)</span>
                     <Badge variant="warning" size="sm">
-                      PILIHAN COACH
+                      STAR DARI 300RB/SESI
                     </Badge>
                   </h3>
                   <p className="text-xs text-zinc-400">
-                    Dapatkan bimbingan teknik angkat beban aman, koreksi postur tubuh, dan target hipertrofi otot bersama trainer tersertifikasi.
+                    Dapatkan bimbingan teknik angkat beban aman, koreksi postur tubuh, dan target hipertrofi otot bersama trainer tersertifikasi (Tarif star Rp 300.000 - Rp 400.000 per sesi).
                   </p>
                 </div>
               </div>
@@ -850,11 +850,17 @@ export default function CustomerPortalPage() {
                             </span>
                           </div>
                           <div className="text-[10px] text-zinc-400 truncate mt-0.5">{c.specialty}</div>
-                          {c.id === "coach-dian" && (
-                            <span className="inline-block mt-1 text-[9px] bg-neon/20 text-neon px-1.5 py-0.2 rounded font-bold uppercase">
-                              Paling Favorit
+                          
+                          <div className="flex items-center justify-between mt-1 pt-0.5">
+                            <span className="text-[10px] text-neon font-black font-mono">
+                              Rp {((c.rate_per_session || 300000) / 1000).toFixed(0)}rb<span className="text-[9px] font-normal text-zinc-400">/sesi</span>
                             </span>
-                          )}
+                            {c.id === "coach-dian" && (
+                              <span className="text-[9px] bg-neon/20 text-neon px-1.5 py-0.2 rounded font-bold uppercase">
+                                Paling Favorit
+                              </span>
+                            )}
+                          </div>
                         </div>
                       </div>
                     );
@@ -864,8 +870,11 @@ export default function CustomerPortalPage() {
                 {/* Session package choice */}
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 rounded-xl bg-zinc-900/80 border border-zinc-800">
                   <div>
-                    <div className="text-xs font-bold text-white">
-                      Pilihan Paket Sesi dengan {currentSelectedCoach.name}:
+                    <div className="text-xs font-bold text-white flex items-center gap-2">
+                      <span>Pilihan Paket Sesi dengan {currentSelectedCoach.name}:</span>
+                      <span className="text-[10px] text-amber-400 font-mono font-bold">
+                        ({formatRupiah(currentSelectedCoach.rate_per_session || 300000)} / sesi)
+                      </span>
                     </div>
                     <div className="text-[11px] text-zinc-400 mt-0.5">{currentSelectedCoach.experience}</div>
                   </div>
@@ -874,24 +883,30 @@ export default function CustomerPortalPage() {
                     <button
                       type="button"
                       onClick={() => setPtSessionsCount(12)}
-                      className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all border ${
+                      className={`px-3 py-2 rounded-lg text-xs font-bold transition-all border text-left ${
                         ptSessionsCount === 12
                           ? "bg-neon text-gym-base border-neon shadow-sm"
-                          : "bg-zinc-800 text-zinc-300 border-zinc-700"
+                          : "bg-zinc-800 text-zinc-300 border-zinc-700 hover:border-zinc-500"
                       }`}
                     >
-                      12 Sesi ({formatRupiah(currentSelectedCoach.pt_rate_12)})
+                      <div className="font-black">12 Sesi ({formatRupiah(currentSelectedCoach.pt_rate_12)})</div>
+                      <div className={`text-[10px] ${ptSessionsCount === 12 ? "text-gym-base font-semibold" : "text-zinc-400"}`}>
+                        @ {formatRupiah(currentSelectedCoach.rate_per_session || 300000)} / sesi
+                      </div>
                     </button>
                     <button
                       type="button"
                       onClick={() => setPtSessionsCount(24)}
-                      className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all border ${
+                      className={`px-3 py-2 rounded-lg text-xs font-bold transition-all border text-left ${
                         ptSessionsCount === 24
                           ? "bg-neon text-gym-base border-neon shadow-sm"
-                          : "bg-zinc-800 text-zinc-300 border-zinc-700"
+                          : "bg-zinc-800 text-zinc-300 border-zinc-700 hover:border-zinc-500"
                       }`}
                     >
-                      24 Sesi ({formatRupiah(currentSelectedCoach.pt_rate_24)})
+                      <div className="font-black">24 Sesi ({formatRupiah(currentSelectedCoach.pt_rate_24)})</div>
+                      <div className={`text-[10px] ${ptSessionsCount === 24 ? "text-gym-base font-semibold" : "text-amber-400 font-bold"}`}>
+                        Diskon Paket (@ {formatRupiah(Math.round(currentSelectedCoach.pt_rate_24 / 24))}/sesi)
+                      </div>
                     </button>
                   </div>
                 </div>

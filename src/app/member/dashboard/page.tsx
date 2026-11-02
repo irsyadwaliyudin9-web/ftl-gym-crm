@@ -275,21 +275,21 @@ export default function MemberDashboardPage() {
           </a>
         </div>
 
-        {/* WAJIB: Penawaran Harga Absolut Default: Paket 12 Sesi Coach/PT = Rp 360.000 */}
+        {/* Penawaran Resmi PT: Star dari Rp 300.000 - Rp 400.000 / sesi */}
         <div className="p-4 rounded-2xl bg-gradient-to-r from-amber-950/60 via-zinc-900 to-black border-2 border-amber-500/80 space-y-2">
           <div className="flex items-center justify-between">
             <Badge variant="warning" size="sm" className="font-black text-[9px] uppercase tracking-wider">
               PENAWARAN RESMI FTL GYM
             </Badge>
-            <span className="text-[10px] text-zinc-400">Hemat Maksimal</span>
+            <span className="text-[10px] text-amber-400 font-bold">Star 300rb – 400rb / Sesi</span>
           </div>
 
           <div>
             <div className="text-base sm:text-lg font-black text-white">
-              Paket 12 Sesi Coach/PT = <span className="text-amber-400 font-black">Rp 360.000</span>
+              Paket Sesi Coach/PT: <span className="text-amber-400 font-black">Mulai Rp 3.600.000</span>
             </div>
             <p className="text-[11px] text-zinc-300 mt-0.5 leading-relaxed">
-              Dapatkan pendampingan teknik angkat beban, deadlift, squat, dan konsultasi asupan nutrisi bersama Coach bersertifikat.
+              Dapatkan pendampingan teknik angkat beban, deadlift, squat, dan konsultasi asupan nutrisi bersama Coach bersertifikat (star Rp 300rb/sesi).
             </p>
           </div>
 
@@ -302,7 +302,7 @@ export default function MemberDashboardPage() {
             }}
             className="w-full bg-amber-400 hover:bg-amber-300 text-black font-black text-xs py-2.5 shadow-lg rounded-xl mt-1"
           >
-            <span>Beli / Perpanjang Sesi PT (Rp 360.000)</span>
+            <span>Beli / Perpanjang Sesi PT (Mulai Rp 3.600.000)</span>
             <ChevronRight className="w-3.5 h-3.5 ml-1" />
           </Button>
         </div>

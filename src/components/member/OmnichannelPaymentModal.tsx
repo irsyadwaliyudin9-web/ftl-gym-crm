@@ -44,10 +44,13 @@ export const OmnichannelPaymentModal: React.FC<OmnichannelPaymentModalProps> = (
   // Mode: "pt_package" or "membership"
   const [itemType, setItemType] = useState<"pt_package" | "membership">(initialItemType);
 
-  // PT Package Options (WAJIB: Hardcoded/Default 12 Sesi = Rp 360.000)
-  const [selectedCoachId, setSelectedCoachId] = useState<string>(member.selected_coach_id || "coach-dian");
+  // PT Package Options (Tarif Sesi PT: Star dari Rp 300.000 - Rp 400.000 / sesi)
+  const [selectedCoachId, setSelectedCoachId] = useState<string>(member.selected_coach_id || "coach-kevin");
   const [selectedPtSessions, setSelectedPtSessions] = useState<number>(12);
-  const ptPrice = selectedPtSessions === 12 ? 360000 : 700000;
+  const currentCoach = coaches.find((c) => c.id === selectedCoachId) || coaches[0];
+  const ptPrice = selectedPtSessions === 12
+    ? (currentCoach?.pt_rate_12 || 3600000)
+    : (currentCoach?.pt_rate_24 || 6800000);
 
   // Membership Renewal Options
   const [selectedMembershipPlan, setSelectedMembershipPlan] = useState<"1_month" | "6_months" | "1_year">("1_month");
@@ -90,7 +93,6 @@ export const OmnichannelPaymentModal: React.FC<OmnichannelPaymentModalProps> = (
 
   if (!isOpen) return null;
 
-  const currentCoach = coaches.find((c) => c.id === selectedCoachId) || coaches[0];
   const totalAmount = itemType === "pt_package" ? ptPrice : membershipPrice;
   const itemTitle =
     itemType === "pt_package"
@@ -215,27 +217,27 @@ export const OmnichannelPaymentModal: React.FC<OmnichannelPaymentModalProps> = (
               </button>
             </div>
 
-            {/* PT PACKAGE CONFIG (WAJIB: 12 SESI = RP 360.000 ABSOLUT) */}
+            {/* PT PACKAGE CONFIG (Tarif Sesi PT: Star dari Rp 300.000 - Rp 400.000 / sesi) */}
             {itemType === "pt_package" && (
               <div className="space-y-3 p-4 rounded-2xl bg-zinc-900/90 border border-amber-500/30">
                 <div className="flex items-center justify-between">
                   <div className="text-xs font-black text-white uppercase flex items-center gap-1.5">
                     <Flame className="w-4 h-4 text-amber-400" />
-                    <span>Penawaran Khusus Sesi Coach FTL</span>
+                    <span>Sesi Personal Trainer Angkat Beban</span>
                   </div>
                   <Badge variant="warning" size="sm" className="text-[10px] font-black">
-                    PENAWARAN RESMI
+                    STAR DARI 300RB/SESI
                   </Badge>
                 </div>
 
-                {/* Hardcoded absolute banner */}
+                {/* Pricing info banner */}
                 <div className="p-3 rounded-xl bg-gradient-to-r from-amber-500/20 via-zinc-900 to-zinc-900 border border-amber-500/50">
-                  <div className="text-[11px] font-bold text-amber-300">PILIHAN DEFAULT RESMI:</div>
-                  <div className="text-lg font-black text-white mt-0.5">
-                    Paket 12 Sesi Coach/PT = <span className="text-amber-400">Rp 360.000</span>
+                  <div className="text-[11px] font-bold text-amber-300">TARIF RESMI PERSONAL TRAINER:</div>
+                  <div className="text-base sm:text-lg font-black text-white mt-0.5">
+                    Star dari <span className="text-amber-400">Rp 300.000 – Rp 400.000</span> / Sesi
                   </div>
                   <div className="text-[10px] text-zinc-400 mt-0.5">
-                    Hanya Rp 30.000 per sesi latihan intensif bersama personal trainer tersertifikasi.
+                    Harga disesuaikan dengan sertifikasi Coach. {currentCoach.name}: <span className="text-amber-300 font-bold">{formatRupiah(currentCoach.rate_per_session || 300000)} / sesi</span>.
                   </div>
                 </div>
 
@@ -264,7 +266,9 @@ export const OmnichannelPaymentModal: React.FC<OmnichannelPaymentModalProps> = (
                           />
                           <div className="min-w-0 flex-1">
                             <div className="text-xs font-bold text-white truncate">{c.nickname}</div>
-                            <div className="text-[10px] text-zinc-400 truncate">{c.specialty}</div>
+                            <div className="text-[10px] text-amber-400 font-mono font-bold">
+                              Rp {((c.rate_per_session || 300000) / 1000).toFixed(0)}rb/sesi
+                            </div>
                           </div>
                         </div>
                       );
@@ -283,7 +287,10 @@ export const OmnichannelPaymentModal: React.FC<OmnichannelPaymentModalProps> = (
                         : "bg-zinc-900 text-zinc-400 border-zinc-800"
                     }`}
                   >
-                    12 Sesi (Rp 360.000)
+                    <div className="font-black">12 Sesi ({formatRupiah(currentCoach.pt_rate_12)})</div>
+                    <div className="text-[9px] opacity-80">
+                      @ {formatRupiah(currentCoach.rate_per_session || 300000)}/sesi
+                    </div>
                   </button>
                   <button
                     type="button"
@@ -294,7 +301,10 @@ export const OmnichannelPaymentModal: React.FC<OmnichannelPaymentModalProps> = (
                         : "bg-zinc-900 text-zinc-400 border-zinc-800"
                     }`}
                   >
-                    24 Sesi (Rp 700.000)
+                    <div className="font-black">24 Sesi ({formatRupiah(currentCoach.pt_rate_24)})</div>
+                    <div className="text-[9px] opacity-80 text-amber-300 font-bold">
+                      Diskon Hemat Paket
+                    </div>
                   </button>
                 </div>
               </div>

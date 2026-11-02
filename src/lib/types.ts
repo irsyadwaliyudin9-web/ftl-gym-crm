@@ -294,5 +294,6 @@ export interface Coach {
   available_days: string;
   pt_rate_12: number;
   pt_rate_24: number;
+  rate_per_session?: number;
 }
 

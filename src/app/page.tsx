@@ -559,7 +559,7 @@ export default function SplitPortalAuthPage() {
                 <li>Area Barbell Olympic & Platform Deadlift Resmi</li>
                 <li>Power Rack, Smith Machine, & Dumbbell Lengkap hingga 50kg</li>
                 <li>Pelatih Pribadi Bersertifikat: Coach Dian, Coach Rendy, Coach Maya, Coach Kevin</li>
-                <li>Penawaran Khusus: Paket 12 Sesi Coach/PT hanya Rp 360.000</li>
+                <li>Tarif Personal Trainer: Star dari Rp 300.000 – Rp 400.000 / sesi latihan</li>
               </ul>
             </div>
           )}
