@@ -5,10 +5,10 @@ import Link from "next/link";
 import { useAuth } from "@/context/AuthContext";
 import { useGymData } from "@/context/GymDataContext";
 import { soundManager } from "@/components/common/SoundEffects";
-import { Building2, Volume2, VolumeX, Bell, ChevronDown } from "lucide-react";
+import { Building2, Volume2, VolumeX, Bell, ChevronDown, LogOut } from "lucide-react";
 
 export const Navbar: React.FC = () => {
-  const { currentUser, currentRole } = useAuth();
+  const { currentUser, currentRole, logoutStaff } = useAuth();
   const { clubs, currentClub, setCurrentClub, needsAttentionMembers, pendingMembersCount } = useGymData();
   const [isMuted, setIsMuted] = useState(soundManager.getMuted());
   const [showClubDropdown, setShowClubDropdown] = useState(false);
@@ -145,6 +145,18 @@ export const Navbar: React.FC = () => {
             <div className="text-xs font-bold text-white leading-tight">{currentUser.full_name}</div>
             <div className="text-[10px] text-neon font-medium leading-tight">{roleLabels[currentRole] || currentRole}</div>
           </div>
+          <button
+            onClick={() => {
+              if (confirm("Yakin ingin keluar dari akun staf FTL Gym?")) {
+                logoutStaff();
+                window.location.href = "/auth/login";
+              }
+            }}
+            title="Keluar / Logout Akun Staf"
+            className="p-1.5 ml-1 rounded-lg text-zinc-400 hover:text-rose-400 hover:bg-zinc-800 transition-colors"
+          >
+            <LogOut className="w-4 h-4" />
+          </button>
         </div>
       </div>
     </header>

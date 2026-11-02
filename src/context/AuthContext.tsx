@@ -8,105 +8,88 @@ interface AuthContextType {
   currentRole: UserRole;
   setCurrentRole: (role: UserRole) => void;
   isAuthenticated: boolean;
+  isStaffAuthenticated: boolean;
+  loginStaff: (email: string, pass: string) => { success: boolean; message: string };
+  logoutStaff: () => void;
   loginAsRole: (role: UserRole) => void;
   logout: () => void;
 }
 
-const DEFAULT_USERS: Record<UserRole, UserProfile> = {
-  club_manager: {
-    id: "user-mgr-01",
-    tenant_id: "tenant-ironforge",
-    club_id: "club-jkt-01",
-    full_name: "Bambang Prakoso",
-    email: "bambang.mgr@ironforge.co.id",
-    phone: "+628128888001",
-    role: "club_manager",
-    avatar_url: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&auto=format&fit=crop&q=80",
-    is_active: true,
-    created_at: "2026-01-15T08:00:00Z",
-  },
-  front_desk: {
-    id: "user-fd-01",
-    tenant_id: "tenant-ironforge",
-    club_id: "club-jkt-01",
-    full_name: "Rina Anggraini",
-    email: "rina.reception@ironforge.co.id",
-    phone: "+6281399887766",
-    role: "front_desk",
-    avatar_url: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80",
-    is_active: true,
-    created_at: "2026-01-16T08:00:00Z",
-  },
-  personal_trainer: {
-    id: "user-pt-01",
-    tenant_id: "tenant-ironforge",
-    club_id: "club-jkt-01",
-    full_name: "Coach Denny Santoso",
-    email: "denny.pt@ironforge.co.id",
-    phone: "+628117766554",
-    role: "personal_trainer",
-    avatar_url: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150&auto=format&fit=crop&q=80",
-    is_active: true,
-    created_at: "2026-01-16T08:00:00Z",
-  },
-  sales: {
-    id: "user-sales-01",
-    tenant_id: "tenant-ironforge",
-    club_id: "club-jkt-01",
-    full_name: "Kevin Wijaya",
-    email: "kevin.sales@ironforge.co.id",
-    phone: "+628156677889",
-    role: "sales",
-    avatar_url: "https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?w=150&auto=format&fit=crop&q=80",
-    is_active: true,
-    created_at: "2026-02-01T08:00:00Z",
-  },
-  superadmin: {
-    id: "user-superadmin",
-    full_name: "Superadmin FitLead FTL",
-    email: "superadmin@fitleadcrm.com",
-    phone: "+6281100009999",
-    role: "superadmin",
-    avatar_url: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&auto=format&fit=crop&q=80",
-    is_active: true,
-    created_at: "2026-01-01T00:00:00Z",
-  },
+const OFFICIAL_STAFF_USER: UserProfile = {
+  id: "user-ftl-staff-official",
+  tenant_id: "tenant-ftl",
+  club_id: "club-ftl-01",
+  full_name: "Staf Resmi FTL Gym",
+  email: "ftlgym@gmail.com",
+  phone: "+62895601800302",
+  role: "club_manager",
+  avatar_url: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&auto=format&fit=crop&q=80",
+  is_active: true,
+  created_at: "2026-01-01T08:00:00Z",
 };
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [currentRole, setRoleState] = useState<UserRole>("club_manager");
-  const [currentUser, setCurrentUser] = useState<UserProfile>(DEFAULT_USERS.club_manager);
-  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(true);
+  const [currentUser, setCurrentUser] = useState<UserProfile>(OFFICIAL_STAFF_USER);
+  const [isStaffAuthenticated, setIsStaffAuthenticated] = useState<boolean>(false);
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
 
+  // Restore staff session on mount
   useEffect(() => {
-    try {
-      const savedRole = localStorage.getItem("fitlead_active_role") as UserRole;
-      if (savedRole && DEFAULT_USERS[savedRole]) {
-        setRoleState(savedRole);
-        setCurrentUser(DEFAULT_USERS[savedRole]);
-      }
-    } catch (e) {
-      // Ignore
+    if (typeof window !== "undefined") {
+      try {
+        const staffSession = localStorage.getItem("ftl_staff_session");
+        if (staffSession === "authenticated") {
+          setIsStaffAuthenticated(true);
+          setIsAuthenticated(true);
+          setCurrentUser(OFFICIAL_STAFF_USER);
+        }
+      } catch (e) {}
     }
   }, []);
 
-  const setCurrentRole = (role: UserRole) => {
-    setRoleState(role);
-    setCurrentUser(DEFAULT_USERS[role]);
+  const loginStaff = (email: string, pass: string): { success: boolean; message: string } => {
+    const cleanEmail = email.trim().toLowerCase();
+    const cleanPass = pass.trim();
+
+    if (cleanEmail === "ftlgym@gmail.com" && cleanPass === "pataruman12345") {
+      setIsStaffAuthenticated(true);
+      setIsAuthenticated(true);
+      setCurrentUser(OFFICIAL_STAFF_USER);
+      setRoleState("club_manager");
+      try {
+        localStorage.setItem("ftl_staff_session", "authenticated");
+      } catch (e) {}
+      return { success: true, message: "Login berhasil! Selamat datang di Dashboard Staf FTL Gym." };
+    }
+
+    return {
+      success: false,
+      message: "Email atau kata sandi salah. Hanya staf resmi FTL Gym (ftlgym@gmail.com) yang diizinkan masuk.",
+    };
+  };
+
+  const logoutStaff = () => {
+    setIsStaffAuthenticated(false);
+    setIsAuthenticated(false);
     try {
-      localStorage.setItem("fitlead_active_role", role);
+      localStorage.removeItem("ftl_staff_session");
     } catch (e) {}
   };
 
+  const setCurrentRole = (role: UserRole) => {
+    setRoleState(role);
+  };
+
   const loginAsRole = (role: UserRole) => {
-    setCurrentRole(role);
+    setRoleState(role);
     setIsAuthenticated(true);
   };
 
   const logout = () => {
-    setIsAuthenticated(false);
+    logoutStaff();
   };
 
   return (
@@ -116,6 +99,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         currentRole,
         setCurrentRole,
         isAuthenticated,
+        isStaffAuthenticated,
+        loginStaff,
+        logoutStaff,
         loginAsRole,
         logout,
       }}

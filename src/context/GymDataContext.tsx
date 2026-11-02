@@ -1047,7 +1047,8 @@ interface GymDataContextType {
     package_type: "1_month" | "6_months" | "1_year";
     selected_coach_id?: string;
     pt_sessions_count?: number;
-  }) => { member: Member; ptPackage?: PTPackage };
+  }) => { success: boolean; member?: Member; ptPackage?: PTPackage; duplicate?: boolean; message?: string; existingMember?: Member };
+  loginCustomer: (identifier: string) => { success: boolean; member?: Member; message: string };
   bookCoachForMember: (coachId: string, memberId: string, sessionsCount: number) => { success: boolean; message: string };
   updateMember: (id: string, updates: Partial<Member>) => void;
   bookGymClass: (classId: string, memberId: string, bookingDate: string) => { success: boolean; message: string };
@@ -1500,7 +1501,7 @@ export const GymDataProvider: React.FC<{ children: React.ReactNode }> = ({ child
     setMembers((prev) => prev.map((m) => (m.id === id ? { ...m, ...updates } : m)));
   };
 
-  // Online Registration for Customers
+  // Online Registration for Customers with Duplicate Guard
   const registerOnlineMember = (data: {
     full_name: string;
     phone: string;
@@ -1508,7 +1509,28 @@ export const GymDataProvider: React.FC<{ children: React.ReactNode }> = ({ child
     package_type: "1_month" | "6_months" | "1_year";
     selected_coach_id?: string;
     pt_sessions_count?: number;
-  }): { member: Member; ptPackage?: PTPackage } => {
+  }): { success: boolean; member?: Member; ptPackage?: PTPackage; duplicate?: boolean; message?: string; existingMember?: Member } => {
+    // 1. Prevent duplicate phone or email registration
+    const cleanPhone = data.phone.replace(/[^0-9]/g, "");
+    const cleanEmail = (data.email || "").trim().toLowerCase();
+
+    const existing = members.find((m) => {
+      const mPhone = m.phone.replace(/[^0-9]/g, "");
+      const mEmail = (m.email || "").trim().toLowerCase();
+      if (cleanPhone && mPhone && cleanPhone === mPhone) return true;
+      if (cleanEmail && mEmail && cleanEmail === mEmail) return true;
+      return false;
+    });
+
+    if (existing) {
+      return {
+        success: false,
+        duplicate: true,
+        existingMember: existing,
+        message: `Nomor WhatsApp (${data.phone}) atau Email (${data.email || "-"}) sudah terdaftar atas nama "${existing.full_name}" (Kode Member: ${existing.member_code}). Anda tidak dapat mendaftar ganda. Silakan gunakan tombol Masuk Akun untuk membuka kartu dan jadwal latihan Anda.`,
+      };
+    }
+
     const prices: Record<string, number> = {
       "1_month": 250000,
       "6_months": 1200000,
@@ -1568,7 +1590,39 @@ export const GymDataProvider: React.FC<{ children: React.ReactNode }> = ({ child
       }
     } catch (e) {}
 
-    return { member: newMember };
+    return { success: true, member: newMember };
+  };
+
+  // Customer Login via WhatsApp or Email
+  const loginCustomer = (identifier: string): { success: boolean; member?: Member; message: string } => {
+    const clean = identifier.trim().toLowerCase();
+    const cleanPhone = clean.replace(/[^0-9]/g, "");
+
+    const found = members.find((m) => {
+      const mPhone = m.phone.replace(/[^0-9]/g, "");
+      const mEmail = (m.email || "").trim().toLowerCase();
+      const mCode = m.member_code.toLowerCase();
+      if (cleanPhone && mPhone && mPhone === cleanPhone) return true;
+      if (clean && mEmail && mEmail === clean) return true;
+      if (clean && mCode && mCode === clean) return true;
+      return false;
+    });
+
+    if (found) {
+      try {
+        localStorage.setItem("ftl_portal_member_id", found.id);
+      } catch (e) {}
+      return {
+        success: true,
+        member: found,
+        message: `Selamat datang kembali, ${found.full_name}!`,
+      };
+    }
+
+    return {
+      success: false,
+      message: "Nomor WhatsApp atau Email belum terdaftar. Silakan lakukan pendaftaran member baru.",
+    };
   };
 
   // Persetujuan & Penolakan Member Online oleh Staf Admin
@@ -1915,6 +1969,7 @@ export const GymDataProvider: React.FC<{ children: React.ReactNode }> = ({ child
         approveMember,
         rejectMember,
         registerOnlineMember,
+        loginCustomer,
         bookCoachForMember,
         updateMember,
         bookGymClass,

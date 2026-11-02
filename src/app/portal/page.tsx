@@ -30,17 +30,22 @@ import {
   Search,
   PartyPopper,
   ArrowRight,
+  LogIn,
+  LogOut,
+  Target,
+  Apple,
+  Activity,
 } from "lucide-react";
 import { Card } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 
-type TabType = "membership" | "coaches" | "classes" | "pass";
+type TabType = "pass" | "pt-schedule" | "classes" | "membership" | "login";
 
 export default function CustomerPortalPage() {
-  const { coaches, gymClasses, registerOnlineMember, bookGymClass, members } = useGymData();
+  const { coaches, gymClasses, registerOnlineMember, loginCustomer, bookGymClass, members } = useGymData();
 
-  // Active Tab
+  // Active Tab - Default to "membership" if no member saved, or "pass" if already registered
   const [activeTab, setActiveTab] = useState<TabType>("membership");
 
   // Form State for Online Membership Registration
@@ -52,16 +57,19 @@ export default function CustomerPortalPage() {
   const [selectedCoachId, setSelectedCoachId] = useState<string>("coach-dian");
   const [ptSessionsCount, setPtSessionsCount] = useState<number>(12);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [duplicateError, setDuplicateError] = useState<{ message: string; existingMember: any } | null>(null);
+
+  // Customer Login State
+  const [loginIdentifier, setLoginIdentifier] = useState("");
+  const [loginError, setLoginError] = useState<string | null>(null);
+  const [loginSuccessNotice, setLoginSuccessNotice] = useState<string | null>(null);
 
   // Success State for Newly Registered Member
   const [registeredMember, setRegisteredMember] = useState<any>(null);
-  const [registeredPtPackage, setRegisteredPtPackage] = useState<any>(null);
   const [bookingMessage, setBookingMessage] = useState<string | null>(null);
 
-  // Persistent Registered Member ID for Cross-Tab & Refresh Continuity
+  // Persistent Registered Member ID
   const [registeredMemberId, setRegisteredMemberId] = useState<string | null>(null);
-  const [lookupQuery, setLookupQuery] = useState("");
-  const [lookupNotice, setLookupNotice] = useState<string | null>(null);
   const [showApprovalNotice, setShowApprovalNotice] = useState(false);
 
   // Load saved member id from localStorage on mount
@@ -71,6 +79,7 @@ export default function CustomerPortalPage() {
         const savedId = localStorage.getItem("ftl_portal_member_id");
         if (savedId) {
           setRegisteredMemberId(savedId);
+          setActiveTab("pass");
         }
       } catch (e) {}
     }
@@ -82,11 +91,12 @@ export default function CustomerPortalPage() {
         (m) =>
           m.id === registeredMemberId ||
           m.member_code.toUpperCase() === registeredMemberId.toUpperCase() ||
-          m.phone.replace(/[^0-9]/g, "") === registeredMemberId.replace(/[^0-9]/g, "")
+          m.phone.replace(/[^0-9]/g, "") === registeredMemberId.replace(/[^0-9]/g, "") ||
+          (m.email && m.email.toLowerCase() === registeredMemberId.toLowerCase())
       )
     : null;
 
-  const displayMember = liveMember || registeredMember || (registeredMemberId ? null : members[0]);
+  const displayMember = liveMember || registeredMember;
   const isPending = displayMember?.status === "pending_approval" || displayMember?.payment_proof_status === "pending";
 
   // Watch for real-time approval transitions (Pending -> Active)
@@ -98,9 +108,6 @@ export default function CustomerPortalPage() {
     }
     prevStatusRef.current = displayMember?.status;
   }, [displayMember?.status]);
-
-  // Quick Coach Modal / Select
-  const [coachBookingSuccess, setCoachBookingSuccess] = useState<string | null>(null);
 
   // Plans details
   const membershipPlans = [
@@ -130,7 +137,7 @@ export default function CustomerPortalPage() {
         "Semua fitur Paket 1 Bulan",
         "Hemat Rp300.000 dibanding bulanan",
         "Free 1x Sesi Personal Trainer Assessment",
-        "Gratis FitLead Official Gym Shaker Bottle",
+        "Gratis FTL Official Shaker Bottle",
         "Bisa cuti/freeze membership 1x (maks 14 hari)",
       ],
     },
@@ -152,10 +159,7 @@ export default function CustomerPortalPage() {
     },
   ];
 
-  // Selected Plan Object
   const currentSelectedPlanObj = membershipPlans.find((p) => p.id === selectedPlan)!;
-
-  // Selected Coach Object
   const currentSelectedCoach = coaches.find((c) => c.id === selectedCoachId) || coaches[0];
   const coachPrice = includeCoach
     ? ptSessionsCount === 24
@@ -164,9 +168,11 @@ export default function CustomerPortalPage() {
     : 0;
   const grandTotal = currentSelectedPlanObj.price + coachPrice;
 
-  // Handle Online Registration Submit
+  // Handle Online Registration Submit with Duplicate Check
   const handleRegisterSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    setDuplicateError(null);
+
     if (!fullName || !phone) {
       alert("Silakan lengkapi nama dan nomor WhatsApp Anda.");
       return;
@@ -183,24 +189,73 @@ export default function CustomerPortalPage() {
         pt_sessions_count: includeCoach ? ptSessionsCount : undefined,
       });
 
-      setRegisteredMember(result.member);
-      setRegisteredMemberId(result.member.id);
-      try {
-        localStorage.setItem("ftl_portal_member_id", result.member.id);
-      } catch (e) {}
-
-      setRegisteredPtPackage(result.ptPackage);
       setIsSubmitting(false);
-      setShowApprovalNotice(false);
-      setActiveTab("pass");
-    }, 700);
+
+      if (!result.success && result.duplicate) {
+        setDuplicateError({
+          message: result.message || "Nomor WhatsApp atau Email ini sudah pernah didaftarkan.",
+          existingMember: result.existingMember,
+        });
+        soundManager.playErrorBeep();
+        return;
+      }
+
+      if (result.member) {
+        setRegisteredMember(result.member);
+        setRegisteredMemberId(result.member.id);
+        try {
+          localStorage.setItem("ftl_portal_member_id", result.member.id);
+        } catch (e) {}
+
+        setShowApprovalNotice(false);
+        setActiveTab("pass");
+      }
+    }, 600);
+  };
+
+  // Handle Customer Login
+  const handleCustomerLoginSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoginError(null);
+
+    if (!loginIdentifier.trim()) {
+      setLoginError("Silakan masukkan Nomor WhatsApp atau Email Anda.");
+      return;
+    }
+
+    const res = loginCustomer(loginIdentifier);
+    if (res.success && res.member) {
+      setRegisteredMemberId(res.member.id);
+      setRegisteredMember(res.member);
+      setLoginSuccessNotice(res.message);
+      soundManager.playSuccessBeep();
+      setTimeout(() => {
+        setLoginSuccessNotice(null);
+        setActiveTab("pass");
+      }, 1000);
+    } else {
+      setLoginError(res.message);
+      soundManager.playErrorBeep();
+    }
+  };
+
+  // Handle Customer Logout
+  const handleCustomerLogout = () => {
+    if (confirm("Keluar dari tampilan akun member ini di perangkat ini?")) {
+      setRegisteredMemberId(null);
+      setRegisteredMember(null);
+      try {
+        localStorage.removeItem("ftl_portal_member_id");
+      } catch (e) {}
+      setActiveTab("login");
+    }
   };
 
   // Quick Book Studio Class
   const handleBookClass = (classId: string, className: string) => {
     const memberId = displayMember ? displayMember.id : members[0]?.id;
     if (!memberId) {
-      alert("Silakan daftar membership terlebih dahulu.");
+      alert("Silakan masuk atau daftar membership terlebih dahulu.");
       return;
     }
 
@@ -210,155 +265,482 @@ export default function CustomerPortalPage() {
     setTimeout(() => setBookingMessage(null), 4000);
   };
 
-  // Handle Lookup Member Card by Code or Phone
-  const handleLookupMember = (e: React.FormEvent) => {
-    e.preventDefault();
-    const clean = lookupQuery.trim();
-    if (!clean) return;
-
-    const found = members.find(
-      (m) =>
-        m.member_code.toUpperCase() === clean.toUpperCase() ||
-        m.phone.replace(/[^0-9]/g, "").includes(clean.replace(/[^0-9]/g, "")) ||
-        m.full_name.toLowerCase().includes(clean.toLowerCase())
-    );
-
-    if (found) {
-      setRegisteredMemberId(found.id);
-      try {
-        localStorage.setItem("ftl_portal_member_id", found.id);
-      } catch (e) {}
-      setLookupNotice(`Kartu member atas nama "${found.full_name}" berhasil ditemukan!`);
-      setActiveTab("pass");
-      setTimeout(() => setLookupNotice(null), 4000);
-    } else {
-      setLookupNotice("Nomor WhatsApp atau kode member tidak ditemukan. Silakan cek kembali atau daftar baru.");
-      setTimeout(() => setLookupNotice(null), 5000);
-    }
-  };
+  // Assigned coach details for customer personal schedule
+  const assignedCoach = displayMember?.selected_coach_id
+    ? coaches.find((c) => c.id === displayMember.selected_coach_id) || coaches[0]
+    : coaches[0];
 
   return (
-    <div className="space-y-8">
-      {/* Hero Announcement */}
-      <div className="relative rounded-3xl bg-gradient-to-r from-gym-card via-gym-elevated to-black border border-gym-border p-6 sm:p-10 overflow-hidden shadow-2xl">
+    <div className="space-y-8 select-none">
+      {/* Top Banner / Welcome Bar */}
+      <div className="relative rounded-3xl bg-gradient-to-r from-gym-card via-gym-elevated to-black border border-gym-border p-6 sm:p-8 overflow-hidden shadow-2xl">
         <div className="absolute top-0 right-0 w-80 h-80 bg-neon/10 rounded-full blur-3xl pointer-events-none" />
-        <div className="relative z-10 max-w-2xl space-y-4">
-          <Badge variant="neon" size="md" className="font-black tracking-wider uppercase">
-            ⚡ FTL GYM OFFICIAL ONLINE PORTAL
-          </Badge>
-          <h1 className="text-3xl sm:text-4xl lg:text-5xl font-black text-white tracking-tight leading-tight">
-            Mulai Transformasi Fisik Anda Hari Ini.
-          </h1>
-          <p className="text-sm sm:text-base text-zinc-300 leading-relaxed">
-            Daftar membership online, pilih pelatih favorit Anda (seperti <span className="text-neon font-bold">Coach Dian</span>), pesan kelas studio, dan dapatkan <span className="text-white font-semibold">Kartu Member Digital & QR Code</span> resmi FTL Gym.
-          </p>
+        <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
+          <div className="space-y-3 max-w-2xl">
+            <div className="flex items-center gap-2">
+              <Badge variant="neon" size="md" className="font-black tracking-wider uppercase">
+                ⚡ FTL GYM OFFICIAL MEMBER PORTAL
+              </Badge>
+              {displayMember && (
+                <Badge variant={isPending ? "warning" : "success"} size="sm" className="font-bold">
+                  {isPending ? "STATUS: PENDING" : "MEMBER AKTIF"}
+                </Badge>
+              )}
+            </div>
 
-          <div className="flex flex-wrap gap-3 pt-2">
+            <h1 className="text-2xl sm:text-3xl lg:text-4xl font-black text-white tracking-tight leading-tight">
+              {displayMember ? (
+                <>
+                  Selamat Datang, <span className="text-neon">{displayMember.full_name}</span>!
+                </>
+              ) : (
+                "Transformasi Fisik Anda Dimulai di Sini."
+              )}
+            </h1>
+
+            <p className="text-xs sm:text-sm text-zinc-300 leading-relaxed">
+              {displayMember ? (
+                <>
+                  Kelola kartu digital FTL Gym Anda, pantau jadwal latihan dengan{" "}
+                  <strong className="text-white">{displayMember.selected_coach_name || "Coach Dian"}</strong>, serta pesan kelas studio favorit Anda.
+                </>
+              ) : (
+                "Daftar membership online, pilih Personal Trainer favorit Anda, dan dapatkan Kartu Member Resmi & QR Code digital langsung di HP Anda."
+              )}
+            </p>
+          </div>
+
+          {/* Quick Account Switcher / Logout */}
+          <div className="shrink-0 flex flex-col sm:flex-row items-start sm:items-center gap-2.5">
+            {displayMember ? (
+              <button
+                onClick={handleCustomerLogout}
+                className="px-4 py-2 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-xs font-bold text-zinc-300 border border-zinc-700 transition-colors flex items-center gap-2"
+              >
+                <LogOut className="w-3.5 h-3.5" />
+                <span>Ganti Akun / Keluar</span>
+              </button>
+            ) : (
+              <button
+                onClick={() => setActiveTab("login")}
+                className="px-5 py-2.5 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-xs font-black text-white border border-zinc-700 transition-all flex items-center gap-2 shadow-sm"
+              >
+                <LogIn className="w-4 h-4 text-neon" />
+                <span>Sudah Punya Akun? Masuk di Sini</span>
+              </button>
+            )}
+          </div>
+        </div>
+
+        {/* Navigation Tabs */}
+        <div className="flex flex-wrap gap-2.5 pt-6 border-t border-zinc-800/80 mt-6">
+          {displayMember && (
             <button
-              onClick={() => setActiveTab("membership")}
-              className={`px-5 py-2.5 rounded-xl text-xs sm:text-sm font-black transition-all flex items-center gap-2 ${
-                activeTab === "membership"
+              onClick={() => setActiveTab("pass")}
+              className={`px-4 py-2 rounded-xl text-xs sm:text-sm font-black transition-all flex items-center gap-2 ${
+                activeTab === "pass"
                   ? "bg-neon text-gym-base shadow-neon"
                   : "bg-zinc-800 text-zinc-300 hover:text-white"
               }`}
             >
-              <Dumbbell className="w-4 h-4" />
-              <span>Daftar Membership</span>
+              <CreditCard className="w-4 h-4" />
+              <span>Kartu Member & QR Pass</span>
             </button>
+          )}
 
+          {displayMember && (
             <button
-              onClick={() => setActiveTab("coaches")}
-              className={`px-5 py-2.5 rounded-xl text-xs sm:text-sm font-black transition-all flex items-center gap-2 ${
-                activeTab === "coaches"
+              onClick={() => setActiveTab("pt-schedule")}
+              className={`px-4 py-2 rounded-xl text-xs sm:text-sm font-black transition-all flex items-center gap-2 ${
+                activeTab === "pt-schedule"
                   ? "bg-neon text-gym-base shadow-neon"
                   : "bg-zinc-800 text-zinc-300 hover:text-white"
               }`}
             >
               <Flame className="w-4 h-4 text-amber-400" />
-              <span>Pilih Personal Trainer</span>
+              <span>Jadwal Sesi Personal Trainer</span>
             </button>
+          )}
 
+          <button
+            onClick={() => setActiveTab("classes")}
+            className={`px-4 py-2 rounded-xl text-xs sm:text-sm font-black transition-all flex items-center gap-2 ${
+              activeTab === "classes"
+                ? "bg-neon text-gym-base shadow-neon"
+                : "bg-zinc-800 text-zinc-300 hover:text-white"
+            }`}
+          >
+            <Calendar className="w-4 h-4" />
+            <span>Jadwal Kelas Studio</span>
+          </button>
+
+          <button
+            onClick={() => {
+              setDuplicateError(null);
+              setActiveTab("membership");
+            }}
+            className={`px-4 py-2 rounded-xl text-xs sm:text-sm font-black transition-all flex items-center gap-2 ${
+              activeTab === "membership"
+                ? "bg-neon text-gym-base shadow-neon"
+                : "bg-zinc-800 text-zinc-300 hover:text-white"
+            }`}
+          >
+            <Dumbbell className="w-4 h-4" />
+            <span>{displayMember ? "Perpanjang / Tambah Paket" : "Daftar Membership Baru"}</span>
+          </button>
+
+          {!displayMember && (
             <button
-              onClick={() => setActiveTab("classes")}
-              className={`px-5 py-2.5 rounded-xl text-xs sm:text-sm font-black transition-all flex items-center gap-2 ${
-                activeTab === "classes"
+              onClick={() => setActiveTab("login")}
+              className={`px-4 py-2 rounded-xl text-xs sm:text-sm font-black transition-all flex items-center gap-2 ${
+                activeTab === "login"
                   ? "bg-neon text-gym-base shadow-neon"
                   : "bg-zinc-800 text-zinc-300 hover:text-white"
               }`}
             >
-              <Calendar className="w-4 h-4" />
-              <span>Jadwal Kelas Studio</span>
+              <LogIn className="w-4 h-4" />
+              <span>Masuk Akun Member</span>
             </button>
-
-            {displayMember && (
-              <button
-                onClick={() => setActiveTab("pass")}
-                className={`px-5 py-2.5 rounded-xl text-xs sm:text-sm font-black transition-all flex items-center gap-2 ${
-                  activeTab === "pass"
-                    ? isPending
-                      ? "bg-amber-500 text-black shadow-lg shadow-amber-500/30"
-                      : "bg-neon text-gym-base shadow-neon"
-                    : isPending
-                    ? "bg-amber-950 text-amber-300 border border-amber-800"
-                    : "bg-zinc-800 text-zinc-300 hover:text-white"
-                }`}
-              >
-                <CreditCard className="w-4 h-4" />
-                <span>Kartu Member Saya</span>
-                {isPending ? (
-                  <span className="w-2 h-2 rounded-full bg-amber-400 animate-ping" />
-                ) : (
-                  <span className="w-2 h-2 rounded-full bg-emerald-400" />
-                )}
-              </button>
-            )}
-          </div>
+          )}
         </div>
       </div>
 
-      {/* Booking Alert Banner */}
+      {/* Global Booking Feedback Notice */}
       {bookingMessage && (
-        <div className="p-4 rounded-xl bg-neon/15 border border-neon/40 text-neon font-bold text-xs sm:text-sm flex items-center gap-2 animate-in fade-in">
+        <div className="p-4 rounded-2xl bg-neon/15 border border-neon/40 text-neon font-bold text-xs sm:text-sm flex items-center gap-2 animate-in fade-in">
           <CheckCircle2 className="w-5 h-5 shrink-0" />
           <span>{bookingMessage}</span>
         </div>
       )}
 
-      {/* Lookup Feedback Notice */}
-      {lookupNotice && (
-        <div className="p-4 rounded-xl bg-zinc-900 border border-zinc-700 text-white font-bold text-xs sm:text-sm flex items-center gap-2 animate-in fade-in">
-          <AlertCircle className="w-5 h-5 text-neon shrink-0" />
-          <span>{lookupNotice}</span>
+      {/* ============================================================================== */}
+      {/* TAB 1: KARTU DIGITAL MEMBER & QR PASS                                          */}
+      {/* ============================================================================== */}
+      {activeTab === "pass" && (
+        <div className="max-w-2xl mx-auto space-y-6 animate-in fade-in">
+          <div className="text-center space-y-2">
+            <Badge variant={isPending ? "warning" : "success"} size="md" className="font-black tracking-wide">
+              {isPending ? "⏳ MENUNGGU APPROVAL ADMIN" : "✓ KARTU MEMBER FTL GYM AKTIF"}
+            </Badge>
+            <h2 className="text-2xl sm:text-3xl font-black text-white">
+              Kartu Member Digital Anda
+            </h2>
+            <p className="text-xs sm:text-sm text-zinc-400">
+              Tunjukkan QR Code di kartu ini pada pemindai meja resepsionis/turnstile untuk akses masuk gym.
+            </p>
+          </div>
+
+          {/* Celebratory Approval Alert */}
+          {showApprovalNotice && !isPending && (
+            <div className="p-5 rounded-3xl bg-gradient-to-r from-emerald-950 via-zinc-900 to-black border-2 border-emerald-500 shadow-xl shadow-emerald-500/20 text-white space-y-2 animate-in zoom-in-95 duration-300">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-2xl bg-emerald-500 text-black flex items-center justify-center font-black">
+                  <PartyPopper className="w-6 h-6" />
+                </div>
+                <div>
+                  <h3 className="text-base font-black text-emerald-400">
+                    SELAMAT! Pendaftaran Anda Telah Disetujui Admin!
+                  </h3>
+                  <p className="text-xs text-zinc-300">
+                    Keanggotaan Anda kini telah <strong>AKTIF</strong>. QR Code dapat langsung digunakan untuk akses masuk gym.
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Pending Approval WhatsApp Instructions Banner */}
+          {isPending && displayMember && (
+            <div className="p-5 rounded-3xl bg-amber-950/70 border-2 border-amber-600/70 text-amber-200 text-xs space-y-4 shadow-xl">
+              <div className="flex items-start gap-3">
+                <Hourglass className="w-6 h-6 text-amber-400 shrink-0 mt-0.5 animate-pulse" />
+                <div className="space-y-1">
+                  <div className="font-black text-white text-sm">
+                    Menunggu Konfirmasi Pembayaran oleh Staf Admin
+                  </div>
+                  <p className="text-[12px] text-zinc-300 leading-relaxed">
+                    Pendaftaran Anda telah tercatat dengan Kode <strong className="text-neon">{displayMember.member_code}</strong>.
+                    Silakan transfer pembayaran ke rekening FTL Gym lalu kirimkan bukti transfer melalui WhatsApp Admin di bawah ini.
+                  </p>
+                </div>
+              </div>
+
+              <div className="p-3.5 rounded-2xl bg-black/70 border border-amber-800/80 text-[12px] space-y-1.5">
+                <div className="text-zinc-400">Rekening Transfer Resmi FTL Gym:</div>
+                <div className="font-mono font-bold text-white text-sm">BCA: 8830-1928-11 (a/n PT FTL Gym Indonesia)</div>
+                <div className="text-zinc-300">
+                  Total Biaya: <strong className="text-neon font-black text-sm">{formatRupiah(displayMember.package_price)}</strong>
+                </div>
+              </div>
+
+              <a
+                href={`https://wa.me/62895601800302?text=${encodeURIComponent(
+                  `Halo Admin FTL Gym, saya sudah mendaftar membership online:\n\n` +
+                  `• Kode Member: ${displayMember.member_code}\n` +
+                  `• Nama: ${displayMember.full_name}\n` +
+                  `• No. HP: ${displayMember.phone}\n` +
+                  `• Paket: ${displayMember.package_type.replace("_", " ")}\n` +
+                  (displayMember.selected_coach_name ? `• Coach: ${displayMember.selected_coach_name} (${displayMember.selected_coach_sessions} Sesi)\n` : "") +
+                  `• Total Biaya: ${formatRupiah(displayMember.package_price)}\n\n` +
+                  `Berikut bukti transfer saya. Mohon segera di-approve. Terima kasih!`
+                )}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center justify-center gap-2 w-full py-3 px-5 rounded-2xl bg-emerald-600 hover:bg-emerald-500 font-black text-white text-xs sm:text-sm shadow-lg transition-all"
+              >
+                <MessageCircle className="w-5 h-5" />
+                <span>Kirim Bukti Transfer ke WA Admin (0895-6018-00302)</span>
+              </a>
+            </div>
+          )}
+
+          {/* Member Card Component */}
+          {displayMember ? (
+            <GymMemberCard member={displayMember} />
+          ) : (
+            <div className="p-8 rounded-3xl bg-zinc-900 border border-zinc-800 text-center space-y-4">
+              <CreditCard className="w-12 h-12 text-zinc-600 mx-auto" />
+              <h3 className="text-lg font-bold text-white">Belum Ada Akun yang Masuk</h3>
+              <p className="text-xs text-zinc-400 max-w-sm mx-auto">
+                Silakan masuk dengan akun yang sudah terdaftar atau lakukan pendaftaran member baru.
+              </p>
+              <div className="flex justify-center gap-3">
+                <Button variant="neon" size="md" onClick={() => setActiveTab("login")}>
+                  Masuk Akun Saya
+                </Button>
+                <Button variant="secondary" size="md" onClick={() => setActiveTab("membership")}>
+                  Daftar Member Baru
+                </Button>
+              </div>
+            </div>
+          )}
         </div>
       )}
 
       {/* ============================================================================== */}
-      {/* TAB 1: DAFTAR MEMBERSHIP ONLINE                                                */}
+      {/* TAB 2: JADWAL SESI PERSONAL TRAINER SAYA                                       */}
+      {/* ============================================================================== */}
+      {activeTab === "pt-schedule" && (
+        <div className="max-w-4xl mx-auto space-y-6 animate-in fade-in">
+          <div>
+            <h2 className="text-2xl font-black text-white flex items-center gap-2">
+              <Flame className="w-6 h-6 text-amber-400" />
+              <span>Jadwal & Kuota Sesi Personal Trainer Anda</span>
+            </h2>
+            <p className="text-xs sm:text-sm text-zinc-400 mt-1">
+              Pantau sisa kuota sesi latihan bersama coach Anda dan atur jadwal latihan langsung via WhatsApp resmi.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-12 gap-6">
+            {/* Coach Profile Card */}
+            <div className="md:col-span-7 bg-gym-card border-2 border-zinc-800 rounded-3xl p-6 space-y-5">
+              <div className="flex items-start gap-4 pb-5 border-b border-zinc-800">
+                <img
+                  src={assignedCoach.photo_url}
+                  alt={assignedCoach.name}
+                  className="w-20 h-20 rounded-2xl object-cover ring-2 ring-amber-400/60 shadow-lg"
+                />
+                <div className="space-y-1">
+                  <span className="text-[10px] font-black uppercase tracking-wider bg-amber-400/20 text-amber-400 px-2 py-0.5 rounded">
+                    Personal Trainer Pilihan Anda
+                  </span>
+                  <h3 className="text-lg font-black text-white leading-tight">{assignedCoach.name}</h3>
+                  <div className="text-xs font-semibold text-neon">{assignedCoach.specialty}</div>
+                  <div className="text-[11px] text-zinc-400 flex items-center gap-2 pt-0.5">
+                    <span className="flex items-center text-amber-400 font-bold gap-1">
+                      <Star className="w-3.5 h-3.5 fill-amber-400" />
+                      {assignedCoach.rating} / 5.0
+                    </span>
+                    <span>·</span>
+                    <span>{assignedCoach.experience}</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Sesi Status */}
+              <div className="grid grid-cols-2 gap-3">
+                <div className="p-4 rounded-2xl bg-zinc-900 border border-zinc-800">
+                  <div className="text-[11px] text-zinc-400 font-bold uppercase">Sisa Kuota Sesi</div>
+                  <div className="text-2xl font-black text-amber-400 mt-1">
+                    {displayMember?.selected_coach_sessions || 12} Sesi
+                  </div>
+                  <div className="text-[10px] text-zinc-500 mt-0.5">Tersedia untuk digunakan</div>
+                </div>
+
+                <div className="p-4 rounded-2xl bg-zinc-900 border border-zinc-800">
+                  <div className="text-[11px] text-zinc-400 font-bold uppercase">Jadwal Praktik</div>
+                  <div className="text-sm font-black text-white mt-1">
+                    {assignedCoach.available_days}
+                  </div>
+                  <div className="text-[10px] text-zinc-500 mt-0.5">Sesuai kesepakatan janji</div>
+                </div>
+              </div>
+
+              {/* Booking WhatsApp Action */}
+              <a
+                href={`https://wa.me/62895601800302?text=${encodeURIComponent(
+                  `Halo Coach ${assignedCoach.nickname} & Admin FTL Gym, saya member ${displayMember?.full_name || ""} (Kode: ${displayMember?.member_code || ""}). Saya ingin membuat janji temu sesi latihan Personal Trainer.`
+                )}`}
+                target="_blank"
+                rel="noreferrer"
+                className="w-full py-3 px-5 rounded-2xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-black font-black text-xs sm:text-sm flex items-center justify-center gap-2 shadow-lg transition-all"
+              >
+                <MessageCircle className="w-4 h-4" />
+                <span>Buat Janji Latihan via WhatsApp ({assignedCoach.nickname})</span>
+              </a>
+            </div>
+
+            {/* Workout Guidance & Program Focus */}
+            <div className="md:col-span-5 space-y-4">
+              <div className="bg-gym-card border border-zinc-800 rounded-3xl p-5 space-y-3">
+                <div className="text-xs font-black uppercase text-white flex items-center gap-2">
+                  <Target className="w-4 h-4 text-neon" />
+                  <span>Fokus Program Pelatihan Anda</span>
+                </div>
+                <div className="space-y-2 text-xs text-zinc-300">
+                  <div className="p-2.5 rounded-xl bg-zinc-900/80 border border-zinc-800 flex items-start gap-2">
+                    <Check className="w-4 h-4 text-neon shrink-0 mt-0.5" />
+                    <span>Penilaian postur & massa otot (*InBody Assessment*)</span>
+                  </div>
+                  <div className="p-2.5 rounded-xl bg-zinc-900/80 border border-zinc-800 flex items-start gap-2">
+                    <Check className="w-4 h-4 text-neon shrink-0 mt-0.5" />
+                    <span>Panduan teknik angkat beban aman & progresif</span>
+                  </div>
+                  <div className="p-2.5 rounded-xl bg-zinc-900/80 border border-zinc-800 flex items-start gap-2">
+                    <Check className="w-4 h-4 text-neon shrink-0 mt-0.5" />
+                    <span>Konsultasi target kalori & asupan protein harian</span>
+                  </div>
+                </div>
+              </div>
+
+              <div className="bg-zinc-900/90 border border-zinc-800 rounded-3xl p-5 space-y-2">
+                <div className="text-xs font-black text-white flex items-center gap-2">
+                  <Activity className="w-4 h-4 text-emerald-400" />
+                  <span>Aturan & Kebijakan Sesi PT</span>
+                </div>
+                <p className="text-[11px] text-zinc-400 leading-relaxed">
+                  Konfirmasi pembatalan sesi wajib dilakukan minimal 4 jam sebelum jadwal latihan dimulai. Pemotongan sesi dilakukan oleh staf/trainer di resepsionis.
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ============================================================================== */}
+      {/* TAB 3: JADWAL KELAS STUDIO FTL GYM                                             */}
+      {/* ============================================================================== */}
+      {activeTab === "classes" && (
+        <div className="space-y-6 animate-in fade-in">
+          <div>
+            <h2 className="text-2xl font-black text-white flex items-center gap-2">
+              <Calendar className="w-6 h-6 text-neon" />
+              <span>Jadwal Kelas Studio FTL Gym</span>
+            </h2>
+            <p className="text-xs sm:text-sm text-zinc-400 mt-1">
+              Semua member resmi FTL Gym berhak mengikuti kelas studio secara gratis. Kuota terbatas!
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            {gymClasses.map((cls) => {
+              const booked = cls.booked_count || 0;
+              const isFull = booked >= cls.capacity_limit;
+              return (
+                <Card key={cls.id} className="bg-gym-card border-zinc-800 p-5 space-y-4 flex flex-col justify-between">
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <span className="text-[10px] bg-zinc-800 text-zinc-300 px-2 py-0.5 rounded font-bold uppercase">
+                        {cls.room}
+                      </span>
+                      <span className="text-xs font-bold text-neon">{cls.start_time} - {cls.end_time} WIB</span>
+                    </div>
+
+                    <h3 className="text-base font-black text-white">{cls.name}</h3>
+                    <p className="text-xs text-zinc-400">Instruktur: <strong className="text-zinc-200">{cls.instructor_name}</strong></p>
+
+                    {/* Capacity Bar */}
+                    <div className="pt-2">
+                      <div className="flex justify-between text-[11px] text-zinc-400 mb-1">
+                        <span>Kapasitas Terisi:</span>
+                        <span className={isFull ? "text-rose-400 font-bold" : "text-white font-semibold"}>
+                          {booked} / {cls.capacity_limit} Kursi
+                        </span>
+                      </div>
+                      <div className="w-full bg-zinc-800 h-2 rounded-full overflow-hidden">
+                        <div
+                          className={`h-full rounded-full transition-all ${
+                            isFull ? "bg-rose-500" : "bg-neon"
+                          }`}
+                          style={{ width: `${Math.min(100, (booked / cls.capacity_limit) * 100)}%` }}
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  <Button
+                    variant={isFull ? "secondary" : "neon"}
+                    size="sm"
+                    disabled={isFull}
+                    onClick={() => handleBookClass(cls.id, cls.name)}
+                    className="w-full text-xs"
+                  >
+                    {isFull ? "Kelas Penuh" : "Booking Slot Kelas"}
+                  </Button>
+                </Card>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      {/* ============================================================================== */}
+      {/* TAB 4: DAFTAR MEMBERSHIP BARU (DENGAN CEK DATA GANDA)                          */}
       {/* ============================================================================== */}
       {activeTab === "membership" && (
         <div className="space-y-8 animate-in fade-in">
-          {/* Quick Lookup Bar for Returning Members */}
-          <div className="p-4 rounded-2xl bg-zinc-900/90 border border-zinc-800 flex flex-col sm:flex-row items-center justify-between gap-4">
-            <div className="flex items-center gap-2.5 text-xs text-zinc-300">
-              <CreditCard className="w-4 h-4 text-neon shrink-0" />
-              <span>Sudah pernah mendaftar sebelumnya? Cek status & kartu Anda di sini:</span>
+          {/* Duplicate Registration Error Banner */}
+          {duplicateError && (
+            <div className="p-5 rounded-3xl bg-rose-950/90 border-2 border-rose-600 shadow-xl text-white space-y-3 animate-in zoom-in-95">
+              <div className="flex items-start gap-3">
+                <AlertCircle className="w-6 h-6 text-rose-400 shrink-0 mt-0.5" />
+                <div className="space-y-1">
+                  <div className="font-black text-sm text-rose-200">
+                    Pendaftaran Ditolak: Data Sudah Terdaftar!
+                  </div>
+                  <p className="text-xs text-zinc-300 leading-relaxed">
+                    {duplicateError.message}
+                  </p>
+                </div>
+              </div>
+
+              <div className="pt-2 flex flex-wrap gap-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setRegisteredMemberId(duplicateError.existingMember.id);
+                    setRegisteredMember(duplicateError.existingMember);
+                    try {
+                      localStorage.setItem("ftl_portal_member_id", duplicateError.existingMember.id);
+                    } catch (e) {}
+                    setDuplicateError(null);
+                    setActiveTab("pass");
+                  }}
+                  className="py-2 px-4 rounded-xl bg-neon text-gym-base font-black text-xs shadow-neon transition-all"
+                >
+                  Buka Akun Saya Sekarang →
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setDuplicateError(null)}
+                  className="py-2 px-3 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-xs text-zinc-300 font-bold transition-colors"
+                >
+                  Tutup Peringatan
+                </button>
+              </div>
             </div>
-            <form onSubmit={handleLookupMember} className="flex items-center gap-2 w-full sm:w-auto">
-              <input
-                type="text"
-                placeholder="No. WhatsApp / Kode (FTL-...)"
-                value={lookupQuery}
-                onChange={(e) => setLookupQuery(e.target.value)}
-                className="bg-black border border-zinc-700 rounded-xl px-3 py-1.5 text-xs text-white placeholder-zinc-500 focus:outline-none focus:border-neon w-full sm:w-56"
-              />
-              <button
-                type="submit"
-                className="px-3.5 py-1.5 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-xs font-bold text-white transition-colors shrink-0"
-              >
-                Cari Kartu
-              </button>
-            </form>
-          </div>
+          )}
 
           <div>
             <h2 className="text-2xl font-black text-white flex items-center gap-2">
@@ -639,280 +1021,70 @@ export default function CustomerPortalPage() {
       )}
 
       {/* ============================================================================== */}
-      {/* TAB 2: PILIH PERSONAL TRAINER (COACH)                                          */}
+      {/* TAB 5: MASUK AKUN CUSTOMER (LOGIN CUSTOMER)                                    */}
       {/* ============================================================================== */}
-      {activeTab === "coaches" && (
-        <div className="space-y-6 animate-in fade-in">
-          <div>
-            <h2 className="text-2xl font-black text-white flex items-center gap-2">
-              <Flame className="w-6 h-6 text-amber-400" />
-              <span>Daftar Coach & Personal Trainer FTL Gym</span>
-            </h2>
-            <p className="text-xs sm:text-sm text-zinc-400 mt-1">
-              Pilih coach terbaik untuk mendampingi target latihan Anda, seperti <strong className="text-white">Coach Dian</strong>, Coach Denny, Coach Maya, dan Coach Kevin.
-            </p>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {coaches.map((coach) => (
-              <Card
-                key={coach.id}
-                className={`bg-gym-card p-6 flex flex-col justify-between border-2 transition-all relative ${
-                  coach.id === "coach-dian"
-                    ? "border-amber-400/80 shadow-lg shadow-amber-400/10"
-                    : "border-zinc-800 hover:border-zinc-700"
-                }`}
-              >
-                {coach.id === "coach-dian" && (
-                  <span className="absolute -top-3 right-6 text-[10px] bg-gradient-to-r from-amber-400 to-amber-500 text-black font-black px-3 py-0.5 rounded-full shadow-md uppercase flex items-center gap-1">
-                    <Award className="w-3 h-3" />
-                    <span>Top Rated Coach</span>
-                  </span>
-                )}
-
-                <div className="space-y-4">
-                  <div className="flex items-start gap-4">
-                    <img
-                      src={coach.photo_url}
-                      alt={coach.name}
-                      className="w-20 h-20 rounded-2xl object-cover ring-2 ring-zinc-700 shrink-0 shadow-md"
-                    />
-                    <div className="min-w-0">
-                      <div className="flex items-center gap-2">
-                        <h3 className="text-lg font-black text-white">{coach.name}</h3>
-                      </div>
-                      <div className="text-xs font-semibold text-neon mt-0.5">{coach.specialty}</div>
-                      <div className="flex items-center gap-2 mt-1.5 text-xs text-zinc-400">
-                        <span className="flex items-center text-amber-400 font-bold gap-1">
-                          <Star className="w-3.5 h-3.5 fill-amber-400" />
-                          {coach.rating} / 5.0
-                        </span>
-                        <span>·</span>
-                        <span>{coach.experience}</span>
-                      </div>
-                    </div>
-                  </div>
-
-                  <p className="text-xs text-zinc-300 leading-relaxed bg-zinc-900/60 p-3 rounded-xl border border-zinc-800">
-                    "{coach.bio}"
-                  </p>
-
-                  <div className="text-xs text-zinc-400 flex items-center gap-1.5">
-                    <Clock className="w-3.5 h-3.5 text-zinc-500" />
-                    <span>Jadwal Tersedia: <strong className="text-white">{coach.available_days}</strong></span>
-                  </div>
-
-                  {/* Rates */}
-                  <div className="pt-3 border-t border-zinc-800 grid grid-cols-2 gap-2 text-xs">
-                    <div className="p-2.5 rounded-lg bg-zinc-900 border border-zinc-800">
-                      <div className="text-[10px] text-zinc-400 font-semibold">Paket 12 Sesi</div>
-                      <div className="text-sm font-black text-white mt-0.5">{formatRupiah(coach.pt_rate_12)}</div>
-                    </div>
-                    <div className="p-2.5 rounded-lg bg-zinc-900 border border-zinc-800">
-                      <div className="text-[10px] text-zinc-400 font-semibold">Paket 24 Sesi</div>
-                      <div className="text-sm font-black text-white mt-0.5">{formatRupiah(coach.pt_rate_24)}</div>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="pt-5 flex items-center gap-2">
-                  <button
-                    onClick={() => {
-                      setSelectedCoachId(coach.id);
-                      setIncludeCoach(true);
-                      setActiveTab("membership");
-                    }}
-                    className="flex-1 py-2.5 rounded-xl text-xs font-bold bg-neon hover:bg-neon-lime text-gym-base transition-colors flex items-center justify-center gap-1.5 shadow-neon-sm"
-                  >
-                    <Flame className="w-3.5 h-3.5" />
-                    <span>Pilih {coach.nickname} & Daftar</span>
-                  </button>
-
-                  <a
-                    href={`https://wa.me/62895601800302?text=Halo%20Admin%20FTL%20Gym,%20saya%20ingin%20konsultasi%20latihan%20dengan%20${encodeURIComponent(coach.name)}`}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="px-3 py-2.5 rounded-xl text-xs font-semibold bg-zinc-800 hover:bg-zinc-700 text-zinc-300 border border-zinc-700 transition-colors"
-                  >
-                    Konsultasi WA
-                  </a>
-                </div>
-              </Card>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* ============================================================================== */}
-      {/* TAB 3: JADWAL KELAS STUDIO FTL GYM                                             */}
-      {/* ============================================================================== */}
-      {activeTab === "classes" && (
-        <div className="space-y-6 animate-in fade-in">
-          <div>
-            <h2 className="text-2xl font-black text-white flex items-center gap-2">
-              <Calendar className="w-6 h-6 text-neon" />
-              <span>Jadwal Kelas Studio FTL Gym</span>
-            </h2>
-            <p className="text-xs sm:text-sm text-zinc-400 mt-1">
-              Semua member aktif FTL Gym berhak mengikuti kelas studio secara gratis. Kuota terbatas!
-            </p>
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            {gymClasses.map((cls) => {
-              const booked = cls.booked_count || 0;
-              const isFull = booked >= cls.capacity_limit;
-              return (
-                <Card key={cls.id} className="bg-gym-card border-zinc-800 p-5 space-y-4 flex flex-col justify-between">
-                  <div className="space-y-2">
-                    <div className="flex items-center justify-between">
-                      <span className="text-[10px] bg-zinc-800 text-zinc-300 px-2 py-0.5 rounded font-bold uppercase">
-                        {cls.room}
-                      </span>
-                      <span className="text-xs font-bold text-neon">{cls.start_time} - {cls.end_time} WIB</span>
-                    </div>
-
-                    <h3 className="text-base font-black text-white">{cls.name}</h3>
-                    <p className="text-xs text-zinc-400">Instruktur: <strong className="text-zinc-200">{cls.instructor_name}</strong></p>
-
-                    {/* Capacity Bar */}
-                    <div className="pt-2">
-                      <div className="flex justify-between text-[11px] text-zinc-400 mb-1">
-                        <span>Kapasitas Terisi:</span>
-                        <span className={isFull ? "text-rose-400 font-bold" : "text-white font-semibold"}>
-                          {booked} / {cls.capacity_limit} Kursi
-                        </span>
-                      </div>
-                      <div className="w-full bg-zinc-800 h-2 rounded-full overflow-hidden">
-                        <div
-                          className={`h-full rounded-full transition-all ${
-                            isFull ? "bg-rose-500" : "bg-neon"
-                          }`}
-                          style={{ width: `${Math.min(100, (booked / cls.capacity_limit) * 100)}%` }}
-                        />
-                      </div>
-                    </div>
-                  </div>
-
-                  <Button
-                    variant={isFull ? "secondary" : "neon"}
-                    size="sm"
-                    disabled={isFull}
-                    onClick={() => handleBookClass(cls.id, cls.name)}
-                    className="w-full text-xs"
-                  >
-                    {isFull ? "Kelas Penuh" : "Booking Slot Kelas"}
-                  </Button>
-                </Card>
-              );
-            })}
-          </div>
-        </div>
-      )}
-
-      {/* ============================================================================== */}
-      {/* TAB 4: KARTU MEMBER DIGITAL SAYA                                               */}
-      {/* ============================================================================== */}
-      {activeTab === "pass" && (
-        <div className="max-w-2xl mx-auto space-y-6 animate-in fade-in">
-          {/* Header */}
+      {activeTab === "login" && (
+        <div className="max-w-md mx-auto space-y-6 animate-in fade-in">
           <div className="text-center space-y-2">
-            <Badge variant={isPending ? "warning" : "success"} size="md" className="font-black tracking-wide">
-              {isPending ? "⏳ MENUNGGU APPROVAL ADMIN" : "✓ KARTU MEMBER FTL GYM AKTIF"}
-            </Badge>
-            <h2 className="text-2xl sm:text-3xl font-black text-white">
-              Kartu Member Digital Anda
-            </h2>
-            <p className="text-xs sm:text-sm text-zinc-400">
-              Kartu identitas resmi keanggotaan FTL Gym. Unduh gambar kartu untuk disimpan di galeri smartphone Anda.
+            <div className="w-12 h-12 rounded-2xl bg-neon text-gym-base flex items-center justify-center font-black mx-auto shadow-neon text-lg">
+              FTL
+            </div>
+            <h2 className="text-2xl font-black text-white">Masuk ke Akun Member FTL Gym</h2>
+            <p className="text-xs text-zinc-400">
+              Masukkan Nomor WhatsApp, Email, atau Kode Member (FTL-...) yang sudah Anda daftarkan sebelumnya.
             </p>
           </div>
 
-          {/* Celebratory Approval Alert (Real-time trigger!) */}
-          {showApprovalNotice && !isPending && (
-            <div className="p-5 rounded-3xl bg-gradient-to-r from-emerald-950 via-zinc-900 to-black border-2 border-emerald-500 shadow-xl shadow-emerald-500/20 text-white space-y-2 animate-in zoom-in-95 duration-300">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-2xl bg-emerald-500 text-black flex items-center justify-center font-black">
-                  <PartyPopper className="w-6 h-6" />
-                </div>
-                <div>
-                  <h3 className="text-base font-black text-emerald-400">
-                    SELAMAT! Pendaftaran Anda Telah Disetujui Admin!
-                  </h3>
-                  <p className="text-xs text-zinc-300">
-                    Keanggotaan Anda kini telah <strong>AKTIF</strong>. QR Code dapat langsung digunakan untuk akses masuk gym.
-                  </p>
-                </div>
-              </div>
+          {loginError && (
+            <div className="p-3.5 rounded-2xl bg-rose-950/80 border border-rose-700 text-rose-300 text-xs font-bold flex items-start gap-2.5">
+              <AlertCircle className="w-4 h-4 text-rose-400 shrink-0 mt-0.5" />
+              <span>{loginError}</span>
             </div>
           )}
 
-          {/* Pending Approval WhatsApp Instructions Banner */}
-          {isPending && displayMember && (
-            <div className="p-5 rounded-3xl bg-amber-950/70 border-2 border-amber-600/70 text-amber-200 text-xs space-y-4 shadow-xl">
-              <div className="flex items-start gap-3">
-                <Hourglass className="w-6 h-6 text-amber-400 shrink-0 mt-0.5 animate-pulse" />
-                <div className="space-y-1">
-                  <div className="font-black text-white text-sm">
-                    Menunggu Konfirmasi Pembayaran oleh Staf Admin
-                  </div>
-                  <p className="text-[12px] text-zinc-300 leading-relaxed">
-                    Pendaftaran Anda telah tercatat dengan Kode <strong className="text-neon">{displayMember.member_code}</strong>.
-                    Silakan transfer pembayaran ke rekening FTL Gym lalu kirimkan bukti transfer melalui WhatsApp Admin di bawah ini.
-                  </p>
-                </div>
-              </div>
-
-              <div className="p-3.5 rounded-2xl bg-black/70 border border-amber-800/80 text-[12px] space-y-1.5">
-                <div className="text-zinc-400">Rekening Transfer Resmi FTL Gym:</div>
-                <div className="font-mono font-bold text-white text-sm">BCA: 8830-1928-11 (a/n PT FTL Gym Indonesia)</div>
-                <div className="text-zinc-300">
-                  Total Biaya: <strong className="text-neon font-black text-sm">{formatRupiah(displayMember.package_price)}</strong>
-                </div>
-              </div>
-
-              {/* Instant WhatsApp Action Link */}
-              <a
-                href={`https://wa.me/62895601800302?text=${encodeURIComponent(
-                  `Halo Admin FTL Gym, saya sudah mendaftar membership online:\n\n` +
-                  `• Kode Member: ${displayMember.member_code}\n` +
-                  `• Nama: ${displayMember.full_name}\n` +
-                  `• No. HP: ${displayMember.phone}\n` +
-                  `• Paket: ${displayMember.package_type.replace("_", " ")}\n` +
-                  (displayMember.selected_coach_name ? `• Coach: ${displayMember.selected_coach_name} (${displayMember.selected_coach_sessions} Sesi)\n` : "") +
-                  `• Total Biaya: ${formatRupiah(displayMember.package_price)}\n\n` +
-                  `Berikut bukti transfer saya. Mohon segera di-approve. Terima kasih!`
-                )}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex items-center justify-center gap-2 w-full py-3 px-5 rounded-2xl bg-emerald-600 hover:bg-emerald-500 font-black text-white text-xs sm:text-sm shadow-lg transition-all"
-              >
-                <MessageCircle className="w-5 h-5" />
-                <span>Kirim Bukti Transfer ke WA Admin (0895-6018-00302)</span>
-              </a>
-
-              <div className="text-[11px] text-amber-300/90 text-center flex items-center justify-center gap-1.5">
-                <span className="w-2 h-2 rounded-full bg-amber-400 animate-ping inline-block" />
-                <span>Status pada layar ini akan otomatis berubah menjadi <strong>AKTIF</strong> saat admin menyetujui tanpa perlu reload halaman!</span>
-              </div>
+          {loginSuccessNotice && (
+            <div className="p-3.5 rounded-2xl bg-emerald-950/80 border border-emerald-600 text-emerald-300 text-xs font-bold flex items-center gap-2.5">
+              <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+              <span>{loginSuccessNotice}</span>
             </div>
           )}
 
-          {/* Member Card Component Display */}
-          {displayMember ? (
-            <GymMemberCard member={displayMember} />
-          ) : (
-            <div className="p-8 rounded-3xl bg-zinc-900 border border-zinc-800 text-center space-y-4">
-              <CreditCard className="w-12 h-12 text-zinc-600 mx-auto" />
-              <h3 className="text-lg font-bold text-white">Belum Ada Kartu Terdaftar</h3>
-              <p className="text-xs text-zinc-400 max-w-sm mx-auto">
-                Silakan daftar paket membership terlebih dahulu untuk menerbitkan kartu member FTL Gym digital Anda.
-              </p>
-              <Button variant="neon" size="md" onClick={() => setActiveTab("membership")}>
-                Daftar Membership Sekarang
+          <Card className="bg-gym-card border-zinc-800 p-6 space-y-4">
+            <form onSubmit={handleCustomerLoginSubmit} className="space-y-4">
+              <div>
+                <label className="block text-xs font-bold text-zinc-300 uppercase mb-1.5">
+                  Nomor WhatsApp / Email / Kode Member *
+                </label>
+                <div className="relative">
+                  <Phone className="w-4 h-4 text-zinc-500 absolute left-3.5 top-1/2 -translate-y-1/2" />
+                  <input
+                    type="text"
+                    required
+                    placeholder="Contoh: 081234567890 atau FTL-0810"
+                    value={loginIdentifier}
+                    onChange={(e) => setLoginIdentifier(e.target.value)}
+                    className="w-full bg-gym-elevated border border-zinc-700 rounded-xl pl-10 pr-3.5 py-2.5 text-xs text-white placeholder-zinc-500 focus:outline-none focus:border-neon"
+                  />
+                </div>
+              </div>
+
+              <Button type="submit" variant="neon" size="lg" className="w-full shadow-neon font-black text-xs py-3">
+                <span>Masuk & Buka Akun Saya</span>
+                <ArrowRight className="w-4 h-4 ml-1.5" />
               </Button>
+            </form>
+
+            <div className="pt-3 border-t border-zinc-800 text-center text-xs text-zinc-400">
+              Belum pernah mendaftar membership?{" "}
+              <button
+                type="button"
+                onClick={() => setActiveTab("membership")}
+                className="text-neon font-bold hover:underline"
+              >
+                Daftar Sekarang
+              </button>
             </div>
-          )}
+          </Card>
         </div>
       )}
     </div>
