@@ -332,35 +332,31 @@ export default function CustomerPortalPage() {
           </div>
         </div>
 
-        {/* Navigation Tabs */}
+        {/* Navigation Tabs - Always visible so customers can explore all features */}
         <div className="flex flex-wrap gap-2.5 pt-6 border-t border-zinc-800/80 mt-6">
-          {displayMember && (
-            <button
-              onClick={() => setActiveTab("pass")}
-              className={`px-4 py-2 rounded-xl text-xs sm:text-sm font-black transition-all flex items-center gap-2 ${
-                activeTab === "pass"
-                  ? "bg-neon text-gym-base shadow-neon"
-                  : "bg-zinc-800 text-zinc-300 hover:text-white"
-              }`}
-            >
-              <CreditCard className="w-4 h-4" />
-              <span>Kartu Member & QR Pass</span>
-            </button>
-          )}
+          <button
+            onClick={() => setActiveTab("pass")}
+            className={`px-4 py-2 rounded-xl text-xs sm:text-sm font-black transition-all flex items-center gap-2 ${
+              activeTab === "pass"
+                ? "bg-neon text-gym-base shadow-neon"
+                : "bg-zinc-800 text-zinc-300 hover:text-white"
+            }`}
+          >
+            <CreditCard className="w-4 h-4" />
+            <span>Kartu Member & QR Pass</span>
+          </button>
 
-          {displayMember && (
-            <button
-              onClick={() => setActiveTab("pt-schedule")}
-              className={`px-4 py-2 rounded-xl text-xs sm:text-sm font-black transition-all flex items-center gap-2 ${
-                activeTab === "pt-schedule"
-                  ? "bg-neon text-gym-base shadow-neon"
-                  : "bg-zinc-800 text-zinc-300 hover:text-white"
-              }`}
-            >
-              <Flame className="w-4 h-4 text-amber-400" />
-              <span>Jadwal Sesi Personal Trainer</span>
-            </button>
-          )}
+          <button
+            onClick={() => setActiveTab("pt-schedule")}
+            className={`px-4 py-2 rounded-xl text-xs sm:text-sm font-black transition-all flex items-center gap-2 ${
+              activeTab === "pt-schedule"
+                ? "bg-neon text-gym-base shadow-neon"
+                : "bg-zinc-800 text-zinc-300 hover:text-white"
+            }`}
+          >
+            <Flame className="w-4 h-4 text-amber-400" />
+            <span>Jadwal Sesi Personal Trainer</span>
+          </button>
 
           <button
             onClick={() => setActiveTab("classes")}
@@ -389,7 +385,7 @@ export default function CustomerPortalPage() {
             <span>{displayMember ? "Perpanjang / Tambah Paket" : "Daftar Membership Baru"}</span>
           </button>
 
-          {!displayMember && (
+          {!displayMember ? (
             <button
               onClick={() => setActiveTab("login")}
               className={`px-4 py-2 rounded-xl text-xs sm:text-sm font-black transition-all flex items-center gap-2 ${
@@ -400,6 +396,14 @@ export default function CustomerPortalPage() {
             >
               <LogIn className="w-4 h-4" />
               <span>Masuk Akun Member</span>
+            </button>
+          ) : (
+            <button
+              onClick={handleCustomerLogout}
+              className="px-4 py-2 rounded-xl text-xs sm:text-sm font-black transition-all flex items-center gap-2 bg-zinc-900 border border-zinc-700 text-rose-400 hover:bg-rose-950/40"
+            >
+              <LogOut className="w-4 h-4" />
+              <span>Keluar Akun ({displayMember.full_name.split(" ")[0]})</span>
             </button>
           )}
         </div>
@@ -525,12 +529,56 @@ export default function CustomerPortalPage() {
           <div>
             <h2 className="text-2xl font-black text-white flex items-center gap-2">
               <Flame className="w-6 h-6 text-amber-400" />
-              <span>Jadwal & Kuota Sesi Personal Trainer Anda</span>
+              <span>Jadwal & Kuota Sesi Personal Trainer</span>
             </h2>
             <p className="text-xs sm:text-sm text-zinc-400 mt-1">
-              Pantau sisa kuota sesi latihan bersama coach Anda dan atur jadwal latihan langsung via WhatsApp resmi.
+              Pantau kuota sesi latihan bersama coach Anda dan atur jadwal latihan langsung via WhatsApp resmi FTL Gym.
             </p>
           </div>
+
+          {/* Member Status Banner if Logged In */}
+          {displayMember ? (
+            <div className="p-4 sm:p-5 rounded-3xl bg-zinc-900 border border-zinc-700/80 flex flex-wrap items-center justify-between gap-4 shadow-xl">
+              <div className="flex items-center gap-3.5">
+                <div className="w-11 h-11 rounded-2xl bg-amber-400 text-gym-base font-black flex items-center justify-center text-sm shadow-md">
+                  {displayMember.full_name.charAt(0)}
+                </div>
+                <div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs text-zinc-400">Akun Member:</span>
+                    <Badge variant={displayMember.status === "active" ? "success" : "warning"} size="sm">
+                      {displayMember.status === "active" ? "Member Aktif" : "Menunggu Approval"}
+                    </Badge>
+                  </div>
+                  <div className="text-base font-black text-white">{displayMember.full_name}</div>
+                  <div className="text-xs text-zinc-400 font-mono">{displayMember.member_code} • {displayMember.phone}</div>
+                </div>
+              </div>
+
+              <div className="text-right">
+                <div className="text-[11px] text-zinc-400 uppercase font-bold">Sisa Kuota PT Anda</div>
+                <div className="text-xl sm:text-2xl font-black text-amber-400">
+                  {displayMember.selected_coach_sessions || 12} Sesi Tersisa
+                </div>
+              </div>
+            </div>
+          ) : (
+            <div className="p-4 sm:p-5 rounded-3xl bg-zinc-900/90 border border-amber-500/30 flex flex-wrap items-center justify-between gap-4">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-2xl bg-amber-400/20 text-amber-400 flex items-center justify-center shrink-0">
+                  <Flame className="w-5 h-5" />
+                </div>
+                <div>
+                  <div className="text-sm font-black text-white">Sudah Punya Akun Member FTL Gym?</div>
+                  <div className="text-xs text-zinc-400">Masuk untuk melihat sisa kuota sesi PT dan jadwal pelatih pribadi Anda.</div>
+                </div>
+              </div>
+              <Button variant="neon" size="sm" onClick={() => setActiveTab("login")} className="text-xs font-black">
+                <LogIn className="w-3.5 h-3.5 mr-1" />
+                <span>Masuk Akun Member</span>
+              </Button>
+            </div>
+          )}
 
           <div className="grid grid-cols-1 md:grid-cols-12 gap-6">
             {/* Coach Profile Card */}
@@ -543,7 +591,7 @@ export default function CustomerPortalPage() {
                 />
                 <div className="space-y-1">
                   <span className="text-[10px] font-black uppercase tracking-wider bg-amber-400/20 text-amber-400 px-2 py-0.5 rounded">
-                    Personal Trainer Pilihan Anda
+                    Personal Trainer Utama
                   </span>
                   <h3 className="text-lg font-black text-white leading-tight">{assignedCoach.name}</h3>
                   <div className="text-xs font-semibold text-neon">{assignedCoach.specialty}</div>
@@ -623,6 +671,36 @@ export default function CustomerPortalPage() {
                   Konfirmasi pembatalan sesi wajib dilakukan minimal 4 jam sebelum jadwal latihan dimulai. Pemotongan sesi dilakukan oleh staf/trainer di resepsionis.
                 </p>
               </div>
+            </div>
+          </div>
+
+          {/* Roster of Certified Coaches */}
+          <div className="pt-4 space-y-4">
+            <h3 className="text-lg font-black text-white flex items-center gap-2">
+              <Users className="w-5 h-5 text-neon" />
+              <span>Tim Personal Trainer Bersertifikat FTL Gym</span>
+            </h3>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+              {coaches.map((c) => (
+                <div key={c.id} className="bg-gym-card border border-zinc-800 rounded-2xl p-4 space-y-3">
+                  <img
+                    src={c.photo_url}
+                    alt={c.name}
+                    className="w-full h-36 rounded-xl object-cover"
+                  />
+                  <div>
+                    <div className="text-sm font-black text-white">{c.name}</div>
+                    <div className="text-xs text-neon font-semibold">{c.specialty}</div>
+                    <div className="text-[11px] text-zinc-400 mt-1 flex items-center justify-between">
+                      <span className="flex items-center text-amber-400 gap-1 font-bold">
+                        <Star className="w-3 h-3 fill-amber-400" />
+                        {c.rating}
+                      </span>
+                      <span>{c.experience}</span>
+                    </div>
+                  </div>
+                </div>
+              ))}
             </div>
           </div>
         </div>
