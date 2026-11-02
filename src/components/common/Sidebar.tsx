@@ -49,12 +49,6 @@ export const Sidebar: React.FC = () => {
       badge: null,
     },
     {
-      href: "/dashboard/classes",
-      label: "Jadwal Kelas",
-      icon: Calendar,
-      badge: null,
-    },
-    {
       href: "/dashboard/reports",
       label: "Laporan & Analitik",
       icon: BarChart3,

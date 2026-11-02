@@ -40,10 +40,10 @@ import { Card } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 
-type TabType = "pass" | "pt-schedule" | "classes" | "membership" | "login";
+type TabType = "pass" | "pt-schedule" | "membership" | "login";
 
 export default function CustomerPortalPage() {
-  const { coaches, gymClasses, registerOnlineMember, loginCustomer, bookGymClass, members } = useGymData();
+  const { coaches, registerOnlineMember, loginCustomer, members } = useGymData();
 
   // Active Tab - Default to "membership" if no member saved, or "pass" if already registered
   const [activeTab, setActiveTab] = useState<TabType>("membership");
@@ -66,7 +66,6 @@ export default function CustomerPortalPage() {
 
   // Success State for Newly Registered Member
   const [registeredMember, setRegisteredMember] = useState<any>(null);
-  const [bookingMessage, setBookingMessage] = useState<string | null>(null);
 
   // Persistent Registered Member ID
   const [registeredMemberId, setRegisteredMemberId] = useState<string | null>(null);
@@ -109,50 +108,50 @@ export default function CustomerPortalPage() {
     prevStatusRef.current = displayMember?.status;
   }, [displayMember?.status]);
 
-  // Plans details
+  // Plans details (Khusus Gym & Latihan Angkat Beban)
   const membershipPlans = [
     {
       id: "1_month" as const,
-      name: "Paket 1 Bulan",
-      tagline: "Cocok untuk permulaan & rutinitas baru",
+      name: "Paket Gym 1 Bulan",
+      tagline: "Akses lengkap area angkat beban & fitness",
       price: 250000,
       period: "1 Bulan",
       popular: false,
       benefits: [
         "Akses bebas 24 Jam ke seluruh alat FTL Gym",
+        "Lengkap Barbell, Dumbbell, Power Rack & Mesin Beban",
         "Akses loker harian & shower room",
-        "1x Free Body Composition Check (InBody)",
-        "Gratis akses semua kelas studio",
+        "1x Free Body Composition Check (InBody Assessment)",
       ],
     },
     {
       id: "6_months" as const,
-      name: "Paket 6 Bulan",
+      name: "Paket Gym 6 Bulan",
       tagline: "Paling Populer · Hemat Rp300.000",
       price: 1200000,
       period: "6 Bulan",
       popular: true,
       badge: "BEST VALUE",
       benefits: [
-        "Semua fitur Paket 1 Bulan",
+        "Semua keuntungan Paket 1 Bulan",
         "Hemat Rp300.000 dibanding bulanan",
-        "Free 1x Sesi Personal Trainer Assessment",
+        "Free 1x Sesi PT Assessment Angkat Beban",
         "Gratis FTL Official Shaker Bottle",
         "Bisa cuti/freeze membership 1x (maks 14 hari)",
       ],
     },
     {
       id: "1_year" as const,
-      name: "Paket 1 Tahun (VIP)",
+      name: "Paket Gym 1 Tahun (VIP)",
       tagline: "Hasil maksimal jangka panjang",
       price: 2200000,
       period: "12 Bulan",
       popular: false,
       badge: "VIP ACCESS",
       benefits: [
-        "Akses VIP 365 Hari penuh",
+        "Akses VIP 365 Hari ke seluruh area gym & beban",
         "Tarif paling hemat (hanya Rp183k/bln)",
-        "Free 2x Sesi Personal Trainer",
+        "Free 2x Sesi Personal Trainer Angkat Beban",
         "Gratis Exclusive FTL Gym Bag & Merchandise",
         "Bisa cuti/freeze membership 2x (total 30 hari)",
       ],
@@ -251,20 +250,6 @@ export default function CustomerPortalPage() {
     }
   };
 
-  // Quick Book Studio Class
-  const handleBookClass = (classId: string, className: string) => {
-    const memberId = displayMember ? displayMember.id : members[0]?.id;
-    if (!memberId) {
-      alert("Silakan masuk atau daftar membership terlebih dahulu.");
-      return;
-    }
-
-    const todayStr = new Date().toISOString().slice(0, 10);
-    const result = bookGymClass(classId, memberId, todayStr);
-    setBookingMessage(result.message);
-    setTimeout(() => setBookingMessage(null), 4000);
-  };
-
   // Assigned coach details for customer personal schedule
   const assignedCoach = displayMember?.selected_coach_id
     ? coaches.find((c) => c.id === displayMember.selected_coach_id) || coaches[0]
@@ -301,11 +286,11 @@ export default function CustomerPortalPage() {
             <p className="text-xs sm:text-sm text-zinc-300 leading-relaxed">
               {displayMember ? (
                 <>
-                  Kelola kartu digital FTL Gym Anda, pantau jadwal latihan dengan{" "}
-                  <strong className="text-white">{displayMember.selected_coach_name || "Coach Dian"}</strong>, serta pesan kelas studio favorit Anda.
+                  Kelola kartu digital FTL Gym Anda, pantau jadwal latihan bersama{" "}
+                  <strong className="text-white">{displayMember.selected_coach_name || "Coach Dian"}</strong>, serta kuota sesi latihan angkat beban Anda.
                 </>
               ) : (
-                "Daftar membership online, pilih Personal Trainer favorit Anda, dan dapatkan Kartu Member Resmi & QR Code digital langsung di HP Anda."
+                "Daftar membership gym online, pilih Personal Trainer favorit Anda, dan dapatkan Kartu Member Resmi & QR Code digital langsung di HP Anda."
               )}
             </p>
           </div>
@@ -332,7 +317,7 @@ export default function CustomerPortalPage() {
           </div>
         </div>
 
-        {/* Navigation Tabs - Always visible so customers can explore all features */}
+        {/* Navigation Tabs - Khusus Gym Angkat Beban & Coach */}
         <div className="flex flex-wrap gap-2.5 pt-6 border-t border-zinc-800/80 mt-6">
           <button
             onClick={() => setActiveTab("pass")}
@@ -359,18 +344,6 @@ export default function CustomerPortalPage() {
           </button>
 
           <button
-            onClick={() => setActiveTab("classes")}
-            className={`px-4 py-2 rounded-xl text-xs sm:text-sm font-black transition-all flex items-center gap-2 ${
-              activeTab === "classes"
-                ? "bg-neon text-gym-base shadow-neon"
-                : "bg-zinc-800 text-zinc-300 hover:text-white"
-            }`}
-          >
-            <Calendar className="w-4 h-4" />
-            <span>Jadwal Kelas Studio</span>
-          </button>
-
-          <button
             onClick={() => {
               setDuplicateError(null);
               setActiveTab("membership");
@@ -382,7 +355,7 @@ export default function CustomerPortalPage() {
             }`}
           >
             <Dumbbell className="w-4 h-4" />
-            <span>{displayMember ? "Perpanjang / Tambah Paket" : "Daftar Membership Baru"}</span>
+            <span>{displayMember ? "Perpanjang / Tambah Sesi PT" : "Daftar Member & Pilih Coach"}</span>
           </button>
 
           {!displayMember ? (
@@ -408,14 +381,6 @@ export default function CustomerPortalPage() {
           )}
         </div>
       </div>
-
-      {/* Global Booking Feedback Notice */}
-      {bookingMessage && (
-        <div className="p-4 rounded-2xl bg-neon/15 border border-neon/40 text-neon font-bold text-xs sm:text-sm flex items-center gap-2 animate-in fade-in">
-          <CheckCircle2 className="w-5 h-5 shrink-0" />
-          <span>{bookingMessage}</span>
-        </div>
-      )}
 
       {/* ============================================================================== */}
       {/* TAB 1: KARTU DIGITAL MEMBER & QR PASS                                          */}
@@ -707,74 +672,7 @@ export default function CustomerPortalPage() {
       )}
 
       {/* ============================================================================== */}
-      {/* TAB 3: JADWAL KELAS STUDIO FTL GYM                                             */}
-      {/* ============================================================================== */}
-      {activeTab === "classes" && (
-        <div className="space-y-6 animate-in fade-in">
-          <div>
-            <h2 className="text-2xl font-black text-white flex items-center gap-2">
-              <Calendar className="w-6 h-6 text-neon" />
-              <span>Jadwal Kelas Studio FTL Gym</span>
-            </h2>
-            <p className="text-xs sm:text-sm text-zinc-400 mt-1">
-              Semua member resmi FTL Gym berhak mengikuti kelas studio secara gratis. Kuota terbatas!
-            </p>
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            {gymClasses.map((cls) => {
-              const booked = cls.booked_count || 0;
-              const isFull = booked >= cls.capacity_limit;
-              return (
-                <Card key={cls.id} className="bg-gym-card border-zinc-800 p-5 space-y-4 flex flex-col justify-between">
-                  <div className="space-y-2">
-                    <div className="flex items-center justify-between">
-                      <span className="text-[10px] bg-zinc-800 text-zinc-300 px-2 py-0.5 rounded font-bold uppercase">
-                        {cls.room}
-                      </span>
-                      <span className="text-xs font-bold text-neon">{cls.start_time} - {cls.end_time} WIB</span>
-                    </div>
-
-                    <h3 className="text-base font-black text-white">{cls.name}</h3>
-                    <p className="text-xs text-zinc-400">Instruktur: <strong className="text-zinc-200">{cls.instructor_name}</strong></p>
-
-                    {/* Capacity Bar */}
-                    <div className="pt-2">
-                      <div className="flex justify-between text-[11px] text-zinc-400 mb-1">
-                        <span>Kapasitas Terisi:</span>
-                        <span className={isFull ? "text-rose-400 font-bold" : "text-white font-semibold"}>
-                          {booked} / {cls.capacity_limit} Kursi
-                        </span>
-                      </div>
-                      <div className="w-full bg-zinc-800 h-2 rounded-full overflow-hidden">
-                        <div
-                          className={`h-full rounded-full transition-all ${
-                            isFull ? "bg-rose-500" : "bg-neon"
-                          }`}
-                          style={{ width: `${Math.min(100, (booked / cls.capacity_limit) * 100)}%` }}
-                        />
-                      </div>
-                    </div>
-                  </div>
-
-                  <Button
-                    variant={isFull ? "secondary" : "neon"}
-                    size="sm"
-                    disabled={isFull}
-                    onClick={() => handleBookClass(cls.id, cls.name)}
-                    className="w-full text-xs"
-                  >
-                    {isFull ? "Kelas Penuh" : "Booking Slot Kelas"}
-                  </Button>
-                </Card>
-              );
-            })}
-          </div>
-        </div>
-      )}
-
-      {/* ============================================================================== */}
-      {/* TAB 4: DAFTAR MEMBERSHIP BARU (DENGAN CEK DATA GANDA)                          */}
+      {/* TAB 3: DAFTAR MEMBER & PILIH COACH (DENGAN CEK DATA GANDA)                     */}
       {/* ============================================================================== */}
       {activeTab === "membership" && (
         <div className="space-y-8 animate-in fade-in">
@@ -822,10 +720,10 @@ export default function CustomerPortalPage() {
 
           <div>
             <h2 className="text-2xl font-black text-white flex items-center gap-2">
-              <span>Langkah 1: Pilih Paket Membership FTL Gym</span>
+              <span>Langkah 1: Pilih Paket Membership Gym & Angkat Beban</span>
             </h2>
             <p className="text-xs sm:text-sm text-zinc-400 mt-1">
-              Pilih durasi membership yang sesuai dengan target kebugaran Anda.
+              Pilih durasi akses ke seluruh area angkat beban dan fasilitas gym FTL Gym.
             </p>
           </div>
 
@@ -901,13 +799,13 @@ export default function CustomerPortalPage() {
                 </div>
                 <div>
                   <h3 className="text-base font-black text-white flex items-center gap-2">
-                    <span>Langkah 2: Ingin Berlatih dengan Personal Trainer? (Opsional)</span>
+                    <span>Langkah 2: Mau Pakai Coach Siapa? (Personal Trainer Angkat Beban)</span>
                     <Badge variant="warning" size="sm">
-                      REKOMENDASI CEPAT
+                      PILIHAN COACH
                     </Badge>
                   </h3>
                   <p className="text-xs text-zinc-400">
-                    Dapatkan pendampingan teknik angkat beban, panduan nutrisi, dan target hasil terukur bersama coach tersertifikasi.
+                    Dapatkan bimbingan teknik angkat beban aman, koreksi postur tubuh, dan target hipertrofi otot bersama trainer tersertifikasi.
                   </p>
                 </div>
               </div>

@@ -10,6 +10,7 @@ import {
   ArrowRight,
   Zap,
   Star,
+  Users,
 } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
@@ -100,7 +101,7 @@ export default function LandingPage() {
           </h1>
 
           <p className="text-base sm:text-xl text-zinc-400 max-w-3xl mb-10 leading-relaxed font-normal">
-            Daftar membership online, booking pelatih pribadi favorit Anda (seperti <strong className="text-white">Coach Dian</strong>), pesan kelas studio, atau akses sistem operasional CRM gym terpadu dalam satu aplikasi.
+            Daftar membership gym online, pilih pelatih pribadi favorit Anda (seperti <strong className="text-white">Coach Dian</strong>), dan akses fasilitas latihan angkat beban serta sistem operasional CRM terpadu dalam satu aplikasi.
           </p>
 
           <div className="flex flex-col sm:flex-row items-center gap-4 mb-16 w-full sm:w-auto">
@@ -214,21 +215,20 @@ export default function LandingPage() {
             {/* Feature 3 */}
             <div className="bg-gym-card border border-zinc-800 rounded-2xl p-6 hover:border-neon/50 transition-all group">
               <div className="w-12 h-12 rounded-xl bg-neon/10 border border-neon/30 flex items-center justify-center text-neon mb-5 group-hover:scale-110 transition-transform">
-                <Calendar className="w-6 h-6" />
+                <Users className="w-6 h-6" />
               </div>
-              <h3 className="text-lg font-bold text-white mb-2">Penjadwalan Kelas Terpusat</h3>
+              <h3 className="text-lg font-bold text-white mb-2">Pilihan Coach & Sesi Latihan Beban</h3>
               <p className="text-xs text-zinc-400 leading-relaxed mb-4">
-                Atur jadwal Yoga, Poundfit, BodyPump, hingga Spinning. Batasi kuota per studio dan cetak
-                manifest kehadiran peserta hanya dengan 1 klik.
+                Pilih Personal Trainer profesional untuk bimbingan teknik angkat beban, powerlifting, hipertrofi otot, dan konsultasi postur tubuh. Atur janji temu dan pantau sisa kuota sesi via portal.
               </p>
               <ul className="text-xs text-zinc-400 space-y-2">
                 <li className="flex items-center gap-2">
                   <CheckCircle className="w-3.5 h-3.5 text-neon" />
-                  <span>Limit kuota otomatis mencegah over-booking</span>
+                  <span>Tim Coach bersertifikat (Coach Dian, Coach Rendy, dll.)</span>
                 </li>
                 <li className="flex items-center gap-2">
                   <CheckCircle className="w-3.5 h-3.5 text-neon" />
-                  <span>Check-in kehadiran langsung di manifest</span>
+                  <span>Booking sesi latihan langsung via WhatsApp resmi</span>
                 </li>
               </ul>
             </div>
@@ -275,7 +275,7 @@ export default function LandingPage() {
                   </div>
                   <div className="flex items-center gap-2">
                     <CheckCircle className="w-4 h-4 text-neon" />
-                    <span>Free Akses Semua Kelas Studio</span>
+                    <span>Akses Lengkap Seluruh Area Angkat Beban</span>
                   </div>
                   <div className="flex items-center gap-2">
                     <CheckCircle className="w-4 h-4 text-neon" />
