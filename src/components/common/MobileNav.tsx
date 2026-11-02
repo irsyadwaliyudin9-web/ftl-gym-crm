@@ -3,7 +3,7 @@
 import React from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { LayoutDashboard, QrCode, Dumbbell, Users, ShoppingBag } from "lucide-react";
+import { LayoutDashboard, QrCode, Dumbbell, Users, BarChart3 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export const MobileNav: React.FC = () => {
@@ -11,10 +11,10 @@ export const MobileNav: React.FC = () => {
 
   const navItems = [
     { href: "/dashboard", label: "Beranda", icon: LayoutDashboard },
+    { href: "/dashboard/members", label: "Members", icon: Users },
     { href: "/dashboard/checkin", label: "Scan QR", icon: QrCode, highlight: true },
     { href: "/dashboard/pt-sessions", label: "Sesi PT", icon: Dumbbell },
-    { href: "/dashboard/members", label: "Members", icon: Users },
-    { href: "/dashboard/pos", label: "Kasir POS", icon: ShoppingBag },
+    { href: "/dashboard/reports", label: "Laporan", icon: BarChart3 },
   ];
 
   return (
