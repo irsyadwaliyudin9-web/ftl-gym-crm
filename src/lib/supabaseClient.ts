@@ -9,10 +9,7 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey);
  * Checks if Supabase client is connected to a live production backend
  */
 export function isLiveSupabaseConfigured(): boolean {
-  return (
-    Boolean(process.env.NEXT_PUBLIC_SUPABASE_URL) &&
-    !process.env.NEXT_PUBLIC_SUPABASE_URL.includes("mock") &&
-    Boolean(process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) &&
-    !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY.includes("dummy")
-  );
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+  return Boolean(url && !url.includes("mock") && key && !key.includes("dummy"));
 }

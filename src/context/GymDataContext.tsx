@@ -6,6 +6,7 @@ import {
   Club,
   UserProfile,
   Member,
+  MemberStatus,
   CheckIn,
   PTPackage,
   PTSessionLog,
