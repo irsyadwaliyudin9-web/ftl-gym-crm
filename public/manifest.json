@@ -1,0 +1,31 @@
+{
+  "name": "FTL Gym - Faster Than Light",
+  "short_name": "FTL Gym",
+  "description": "Sistem CRM & Portal Member FTL Gym: Presensi QR Code, Pendaftaran Member Online, dan Jadwal Personal Trainer",
+  "start_url": "/portal",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#0A0A0A",
+  "theme_color": "#0A0A0A",
+  "icons": [
+    {
+      "src": "/icon.svg",
+      "sizes": "192x192 512x512",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["fitness", "lifestyle", "productivity"],
+  "shortcuts": [
+    {
+      "name": "Kartu Digital Member",
+      "url": "/portal",
+      "description": "Buka Kartu Pass dan QR Code FTL Gym"
+    },
+    {
+      "name": "Dashboard Staf CRM",
+      "url": "/dashboard",
+      "description": "Buka Dashboard CRM & Presensi Front Desk"
+    }
+  ]
+}
