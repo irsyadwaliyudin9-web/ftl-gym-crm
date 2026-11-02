@@ -2,7 +2,7 @@
 
 import React, { useState } from "react";
 import { useGymData } from "@/context/GymDataContext";
-import { formatRupiah } from "@/lib/utils";
+import { formatRupiah, formatWIBDate, formatWIBTime } from "@/lib/utils";
 import {
   BarChart3,
   Download,
@@ -11,6 +11,10 @@ import {
   DollarSign,
   TrendingUp,
   FileSpreadsheet,
+  Receipt,
+  CheckCircle2,
+  CreditCard,
+  ArrowUpRight,
 } from "lucide-react";
 import { Card } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
@@ -25,6 +29,7 @@ export default function ReportsAnalyticsPage() {
     checkIns,
     ptPackages,
     ptSessionLogs,
+    transactions,
     exportReportsCSV,
     exportMembersCSV,
   } = useGymData();
@@ -32,16 +37,18 @@ export default function ReportsAnalyticsPage() {
   const [dateRange, setDateRange] = useState("month"); // 'today', 'week', 'month'
   const [selectedTrainer, setSelectedTrainer] = useState<string>("all");
 
-  // Revenue calculation
+  // Revenue calculation (Semua pendaftaran member aktif & paket PT)
   const membershipRev = members
-    .filter((m) => m.club_id === currentClub.id && m.status === "active")
+    .filter((m) => m.status === "active")
     .reduce((sum, m) => sum + (m.package_price || 0), 0);
 
   const ptRev = ptPackages
-    .filter((p) => p.club_id === currentClub.id)
-    .reduce((sum, p) => sum + (p.total_sessions * 175000), 0);
+    .reduce((sum, p) => sum + (p.price || (p.total_sessions * 300000)), 0);
 
   const totalRev = membershipRev + ptRev;
+
+  // Filter paid transactions for financial audit ledger
+  const paidTransactions = transactions.filter((t) => t.status === "paid");
 
   // Trainer Ranking Leaderboard
   const trainerMap = new Map<string, { trainer_name: string; total_sessions: number }>();
@@ -245,6 +252,83 @@ export default function ReportsAnalyticsPage() {
                     <td className="py-3 px-3">
                       <Badge variant="success" size="sm">
                         QUALIFIED BONUS
+                      </Badge>
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
+      </Card>
+
+      {/* Log Histori Pemasukan Kas & Transaksi Member */}
+      <Card className="space-y-4">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-2 border-b border-zinc-800">
+          <div>
+            <h2 className="text-base font-bold text-white flex items-center gap-2">
+              <Receipt className="w-4 h-4 text-neon" />
+              <span>Log Histori Pemasukan Kas & Transaksi Member (Audit Keuangan)</span>
+            </h2>
+            <p className="text-xs text-zinc-400">
+              Setiap kali ada member mendaftar, disetujui, atau membeli paket sesi, transaksi kas bertambah dan tercatat di sini.
+            </p>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <Badge variant="success" size="sm" className="font-mono">
+              {paidTransactions.length} Transaksi Terverifikasi
+            </Badge>
+          </div>
+        </div>
+
+        <div className="overflow-x-auto">
+          <table className="w-full text-left text-xs">
+            <thead className="bg-gym-elevated/70 text-zinc-400 uppercase text-[10px] font-bold border-b border-zinc-800">
+              <tr>
+                <th className="py-2.5 px-3">Waktu (WIB)</th>
+                <th className="py-2.5 px-3">No. Invoice</th>
+                <th className="py-2.5 px-3">Nama Member</th>
+                <th className="py-2.5 px-3">Keterangan Transaksi</th>
+                <th className="py-2.5 px-3">Metode Bayar</th>
+                <th className="py-2.5 px-3 text-right">Pemasukan (Rp)</th>
+                <th className="py-2.5 px-3 text-center">Status</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-zinc-800">
+              {paidTransactions.length === 0 ? (
+                <tr>
+                  <td colSpan={7} className="py-8 text-center text-zinc-500">
+                    Belum ada riwayat transaksi lunas.
+                  </td>
+                </tr>
+              ) : (
+                paidTransactions.map((tx) => (
+                  <tr key={tx.id} className="hover:bg-zinc-800/40 transition-colors">
+                    <td className="py-3 px-3 font-mono text-zinc-300">
+                      <div>{formatWIBDate(tx.paid_at || tx.created_at)}</div>
+                      <div className="text-[10px] text-zinc-500">{formatWIBTime(tx.paid_at || tx.created_at)}</div>
+                    </td>
+                    <td className="py-3 px-3 font-mono font-bold text-amber-300 text-xs">
+                      {tx.invoice_code}
+                    </td>
+                    <td className="py-3 px-3">
+                      <div className="font-bold text-white">{tx.member_name}</div>
+                      <div className="text-[10px] text-zinc-400 font-mono">{tx.member_phone || "-"}</div>
+                    </td>
+                    <td className="py-3 px-3">
+                      <div className="font-bold text-zinc-200">{tx.title}</div>
+                      <div className="text-[10px] text-zinc-400">{tx.description}</div>
+                    </td>
+                    <td className="py-3 px-3 capitalize text-zinc-300">
+                      {tx.payment_method === "tunai" ? "Tunai Kasir Gym" : tx.payment_channel?.replace("_", " ").toUpperCase() || "Online"}
+                    </td>
+                    <td className="py-3 px-3 text-right font-black font-mono text-neon text-sm">
+                      +{formatRupiah(tx.amount)}
+                    </td>
+                    <td className="py-3 px-3 text-center">
+                      <Badge variant="success" size="sm" className="font-black text-[10px]">
+                        ✓ LUNAS
                       </Badge>
                     </td>
                   </tr>

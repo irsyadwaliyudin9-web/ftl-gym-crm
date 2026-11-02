@@ -133,6 +133,7 @@ export interface Member {
   selected_coach_id?: string;
   selected_coach_name?: string;
   selected_coach_sessions?: number;
+  pt_sessions_remaining?: number;
   // Computed / Joined fields
   club_name?: string;
   assigned_sales_name?: string;

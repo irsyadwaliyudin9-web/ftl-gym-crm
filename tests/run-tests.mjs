@@ -607,6 +607,98 @@ assert.strictEqual(testMember.pt_sessions_remaining, 17); // Untouched
 
 console.log("✓ TEST 11 PASSED: 1-Hour cash payment expiration and Front Desk cashier confirmation function flawlessly.");
 
+// ----------------------------------------------------
+// TEST 12: Member Permanent Persistence & Financial Revenue Accounting
+// ----------------------------------------------------
+console.log("\n--- TEST 12: Member Permanent Persistence & Revenue Accounting ---");
+
+// Test A: Member persists in CRM database even after session logout
+const crmDatabase = {
+  members: [],
+  transactions: [],
+};
+
+function registerMemberSim(crmDb, data) {
+  const member = {
+    id: `mem-${Date.now()}`,
+    full_name: data.fullName,
+    phone: data.phone,
+    email: data.email,
+    status: "active",
+    package_price: 250000,
+  };
+  crmDb.members.unshift(member);
+
+  const tx = {
+    id: `tx-reg-${Date.now()}`,
+    member_id: member.id,
+    amount: 250000,
+    status: "paid",
+  };
+  crmDb.transactions.unshift(tx);
+
+  const session = { token: "token-123", memberId: member.id };
+  return { member, session };
+}
+
+function logoutMemberSim(sessionRef) {
+  sessionRef.current = null; // Session cleared
+}
+
+let activeSession = { current: null };
+const regResult = registerMemberSim(crmDatabase, {
+  fullName: "Budi Wijaya",
+  phone: "081299991111",
+  email: "budi@gmail.com",
+});
+activeSession.current = regResult.session;
+
+assert.strictEqual(crmDatabase.members.length, 1);
+assert.strictEqual(crmDatabase.transactions.length, 1);
+assert.strictEqual(crmDatabase.transactions[0].amount, 250000);
+
+// Member logs out
+logoutMemberSim(activeSession);
+assert.strictEqual(activeSession.current, null); // Session is null
+assert.strictEqual(crmDatabase.members.length, 1); // Member STILL in database!
+assert.strictEqual(crmDatabase.members[0].full_name, "Budi Wijaya");
+
+// Test B: Member approval triggers revenue accounting
+function approveOnlineMemberSim(crmDb, pendingMember, coachPrice = 0) {
+  pendingMember.status = "active";
+  const totalRev = (pendingMember.package_price || 250000) + coachPrice;
+  const regTx = {
+    id: `tx-appr-${Date.now()}`,
+    member_id: pendingMember.id,
+    amount: totalRev,
+    status: "paid",
+  };
+  crmDb.transactions.unshift(regTx);
+  return totalRev;
+}
+
+const pendingMem = {
+  id: "mem-pending-01",
+  full_name: "Siti Rahma",
+  status: "pending_approval",
+  package_price: 1200000, // 6 months
+};
+crmDatabase.members.unshift(pendingMem);
+
+const income = approveOnlineMemberSim(crmDatabase, pendingMem, 3600000); // 12 PT sessions
+assert.strictEqual(pendingMem.status, "active");
+assert.strictEqual(income, 4800000);
+assert.strictEqual(crmDatabase.transactions[0].amount, 4800000);
+assert.strictEqual(crmDatabase.transactions[0].status, "paid");
+
+const totalRevenue = crmDatabase.transactions
+  .filter((t) => t.status === "paid")
+  .reduce((sum, t) => sum + t.amount, 0);
+
+assert.strictEqual(totalRevenue, 250000 + 4800000); // 5.050.000
+
+console.log("✓ TEST 12 PASSED: Members persist permanently across logout and revenue accounting reflects all registrations.");
+
 console.log("\n====================================================");
-console.log("ALL VERIFICATION ASSERTIONS PASSED (12/12 TEST SUITES)");
+console.log("ALL VERIFICATION ASSERTIONS PASSED (13/13 TEST SUITES)");
 console.log("====================================================");

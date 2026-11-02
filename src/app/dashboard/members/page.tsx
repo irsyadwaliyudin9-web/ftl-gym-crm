@@ -47,10 +47,10 @@ export default function MembersCRMPage() {
     }
   };
 
-  // Filter members
+  // Filter members (Pastikan akun member yang mendaftar & aktif tetap ada selamanya di dashboard staf)
   const filteredMembers = members.filter((m) => {
-    // Tampilkan permohonan pending dari seluruh cabang agar admin tidak terlewat
-    if (statusFilter !== "pending" && m.club_id !== currentClub.id) return false;
+    // Tampilkan member: permohonan pending atau member terdaftar di gym
+    if (statusFilter !== "pending" && m.club_id && m.club_id !== currentClub.id && m.club_id !== "club-ftl-01" && m.club_id !== "club-jkt-01") return false;
 
     // Filter tab
     if (statusFilter === "expiring") {

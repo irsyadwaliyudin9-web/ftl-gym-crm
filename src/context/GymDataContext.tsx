@@ -1388,16 +1388,13 @@ export const GymDataProvider: React.FC<{ children: React.ReactNode }> = ({ child
     }
   }, [members, checkIns, ptPackages, ptSessionLogs, gymClasses, classBookings, posTransactions, posProducts, tenants, transactions, weightliftingSessions]);
 
-  // Derived stats
-  const activeMembersCount = members.filter((m) => m.club_id === currentClub.id && m.status === "active").length;
+  // Derived stats (Semua member terdaftar & aktif tercatat di dashboard)
+  const activeMembers = members.filter((m) => m.status === "active");
+  const activeMembersCount = activeMembers.length;
   
-  // Monthly Revenue = Membership Package prices + Personal Trainer Packages
-  const membershipRev = members
-    .filter((m) => m.club_id === currentClub.id && m.status === "active")
-    .reduce((sum, m) => sum + (m.package_price || 0), 0);
-  const ptRev = ptPackages
-    .filter((p) => p.club_id === currentClub.id)
-    .reduce((sum, p) => sum + (p.total_sessions * 175000), 0);
+  // Monthly Revenue = Akumulasi Biaya Membership Aktif + Paket Personal Trainer
+  const membershipRev = activeMembers.reduce((sum, m) => sum + (m.package_price || 0), 0);
+  const ptRev = ptPackages.reduce((sum, p) => sum + (p.price || (p.total_sessions * 300000)), 0);
   const monthlyRevenue = membershipRev + ptRev;
 
   // Check-ins today
@@ -1830,12 +1827,22 @@ export const GymDataProvider: React.FC<{ children: React.ReactNode }> = ({ child
     const target = members.find((m) => m.id === memberId);
     if (!target) return { success: false, message: "Member tidak ditemukan." };
 
+    const coach = target.selected_coach_id
+      ? coaches.find((c) => c.id === target.selected_coach_id) || coaches[0]
+      : undefined;
+    const ptPrice = target.selected_coach_sessions && coach
+      ? (target.selected_coach_sessions === 24 ? coach.pt_rate_24 : coach.pt_rate_12)
+      : 0;
+    const membershipPrice = target.package_price || 250000;
+    const totalRegRevenue = membershipPrice + ptPrice;
+
     const updatedMembers = members.map((m) =>
       m.id === memberId
         ? {
             ...m,
             status: "active" as MemberStatus,
             payment_proof_status: "approved" as const,
+            pt_sessions_remaining: (m.pt_sessions_remaining || 0) + (target.selected_coach_sessions || 0),
             rejection_reason: undefined,
             notes: (m.notes ? m.notes + " · " : "") + `Disetujui Admin pada ${new Date().toLocaleDateString("id-ID")}`,
           }
@@ -1843,23 +1850,51 @@ export const GymDataProvider: React.FC<{ children: React.ReactNode }> = ({ child
     );
     setMembers(updatedMembers);
 
+    // Record financial revenue transaction in transactions ledger
+    const regTx: Transaction = {
+      id: `tx-appr-${Date.now()}`,
+      member_id: target.id,
+      member_name: target.full_name,
+      member_phone: target.phone,
+      invoice_code: `INV-REG-${Date.now().toString().slice(-6)}`,
+      transaction_type: "membership",
+      title: `Pendaftaran Member Baru (${target.package_type || "1 Bulan"}${target.selected_coach_name ? ` + PT ${target.selected_coach_name}` : ""})`,
+      description: `Pemasukan kas pendaftaran resmi member ${target.full_name}`,
+      amount: totalRegRevenue,
+      payment_method: "online",
+      payment_channel: "transfer_bank",
+      status: "paid",
+      created_at: new Date().toISOString(),
+      expires_at: new Date(Date.now() + 3600000).toISOString(),
+      paid_at: new Date().toISOString(),
+      confirmed_by: "Staf Admin FTL",
+      details: {
+        package_type: target.package_type,
+        coach_id: target.selected_coach_id,
+        coach_name: target.selected_coach_name,
+        sessions_count: target.selected_coach_sessions,
+      },
+    };
+
+    setTransactions((prev) => [regTx, ...prev]);
+
     try {
       const saved = localStorage.getItem(LOCAL_STORAGE_KEY);
       const parsed = saved ? JSON.parse(saved) : {};
       parsed.members = updatedMembers;
+      parsed.transactions = [regTx, ...(parsed.transactions || [])];
       localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(parsed));
 
       if (typeof window !== "undefined" && "BroadcastChannel" in window) {
         const bc = new BroadcastChannel("ftl_gym_sync_v4");
         bc.postMessage({ type: "SYNC_MEMBERS", members: updatedMembers });
+        bc.postMessage({ type: "SYNC_TRANSACTIONS", transaction: regTx });
         bc.close();
       }
     } catch (e) {}
 
     // If member selected a coach during online registration, activate their PT package
-    if (target.selected_coach_id && target.selected_coach_sessions) {
-      const coach = coaches.find((c) => c.id === target.selected_coach_id) || coaches[0];
-      const ptPrice = target.selected_coach_sessions === 24 ? coach.pt_rate_24 : coach.pt_rate_12;
+    if (target.selected_coach_id && target.selected_coach_sessions && coach) {
       const startDate = new Date().toISOString().slice(0, 10);
 
       const newPtPkg: PTPackage = {

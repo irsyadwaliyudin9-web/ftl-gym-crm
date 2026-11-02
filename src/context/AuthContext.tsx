@@ -160,35 +160,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       return { success: true, member: matched, message: `Selamat datang kembali, ${matched.full_name}!` };
     }
 
-    // If identifier not found, create a demo account for first-time login
-    const demoMember: Member = {
-      id: "mem-" + Date.now().toString(36),
-      tenant_id: "tenant-ftl",
-      club_id: "club-ftl-01",
-      member_code: "FTL-" + Math.floor(1000 + Math.random() * 9000),
-      full_name: identifier.includes("@") ? identifier.split("@")[0].toUpperCase() : "Member FTL",
-      phone: cleanDigits || "+6281234567890",
-      email: identifier.includes("@") ? clean : undefined,
-      status: "active",
-      package_type: "6_months",
-      package_price: 1200000,
-      start_date: new Date().toISOString().slice(0, 10),
-      expiry_date: new Date(Date.now() + 180 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10),
-      qr_code_data: "FTL:NEW:" + Date.now(),
-      selected_coach_id: "coach-dian",
-      selected_coach_name: "Coach Dian",
-      selected_coach_sessions: 12,
-      created_at: new Date().toISOString(),
+    return {
+      success: false,
+      message: "Nomor WhatsApp atau Email belum terdaftar di FTL Gym. Silakan klik 'Daftar Member Baru' di atas untuk membuat akun.",
     };
-
-    setCurrentMember(demoMember);
-    setIsMemberAuthenticated(true);
-    try {
-      localStorage.setItem("ftl_member_session", JSON.stringify(demoMember));
-      localStorage.setItem("ftl_portal_member_id", demoMember.id);
-    } catch (e) {}
-
-    return { success: true, member: demoMember, message: `Akun member aktif! Selamat datang di FTL Gym.` };
   };
 
   const registerMember = (data: {
@@ -203,8 +178,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     const newMember: Member = {
       id: "mem-" + Date.now().toString(36),
-      tenant_id: "tenant-ftl",
-      club_id: "club-ftl-01",
+      tenant_id: "tenant-ironforge",
+      club_id: "club-jkt-01",
+      club_name: "FTL Gym Jakarta Pusat (Pusat)",
       member_code: "FTL-" + Math.floor(1000 + Math.random() * 9000),
       full_name: cleanName,
       phone: cleanPhone,
@@ -229,21 +205,56 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       localStorage.setItem("ftl_member_session", JSON.stringify(newMember));
       localStorage.setItem("ftl_portal_member_id", newMember.id);
 
-      // Append to fitlead_crm_state if present
+      // Append to fitlead_crm_state permanently so it persists in Staff Dashboard
       const raw = localStorage.getItem("fitlead_crm_state");
-      if (raw) {
-        const parsed = JSON.parse(raw);
-        if (parsed.members && Array.isArray(parsed.members)) {
-          parsed.members.unshift(newMember);
-          localStorage.setItem("fitlead_crm_state", JSON.stringify(parsed));
-        }
+      const parsed = raw ? JSON.parse(raw) : {};
+      if (!Array.isArray(parsed.members)) {
+        parsed.members = [];
+      }
+      parsed.members = [newMember, ...parsed.members.filter((m: Member) => m.id !== newMember.id)];
+
+      // Record financial revenue transaction
+      if (!Array.isArray(parsed.transactions)) {
+        parsed.transactions = [];
+      }
+      const regTx = {
+        id: `tx-reg-${Date.now()}`,
+        member_id: newMember.id,
+        member_name: newMember.full_name,
+        member_phone: newMember.phone,
+        invoice_code: `INV-REG-${Date.now().toString().slice(-6)}`,
+        transaction_type: "membership",
+        title: "Pendaftaran Member Baru (Paket 1 Bulan)",
+        description: `Pemasukan biaya pendaftaran keanggotaan aktif member ${newMember.full_name}`,
+        amount: 250000,
+        payment_method: "online",
+        payment_channel: "transfer_bank",
+        status: "paid",
+        created_at: new Date().toISOString(),
+        expires_at: new Date(Date.now() + 3600000).toISOString(),
+        paid_at: new Date().toISOString(),
+        confirmed_by: "Sistem Otomatis FTL",
+        details: {
+          package_type: "1_month",
+        },
+      };
+      parsed.transactions = [regTx, ...parsed.transactions];
+
+      localStorage.setItem("fitlead_crm_state", JSON.stringify(parsed));
+
+      // Broadcast real-time to Staff Dashboard in other tabs
+      if (typeof window !== "undefined" && "BroadcastChannel" in window) {
+        const bc = new BroadcastChannel("ftl_gym_sync_v4");
+        bc.postMessage({ type: "SYNC_MEMBERS", members: parsed.members, newMember });
+        bc.postMessage({ type: "SYNC_TRANSACTIONS", transaction: regTx });
+        bc.close();
       }
     } catch (e) {}
 
     return {
       success: true,
       member: newMember,
-      message: `Pendaftaran berhasil! Selamat bergabung di FTL Gym, ${newMember.full_name}.`,
+      message: `Pendaftaran berhasil! Akun Anda aktif dan tercatat resmi di sistem FTL Gym.`,
     };
   };
 
