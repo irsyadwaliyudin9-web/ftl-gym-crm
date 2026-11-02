@@ -65,6 +65,27 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         }
       } catch (e) {}
     }
+
+    // Sync member status across tabs in real-time when staff approves
+    if (typeof window !== "undefined" && "BroadcastChannel" in window) {
+      const bc = new BroadcastChannel("ftl_gym_sync_v4");
+      bc.onmessage = (event) => {
+        if (event.data?.type === "SYNC_MEMBERS" && Array.isArray(event.data.members)) {
+          setCurrentMember((prev) => {
+            if (!prev) return prev;
+            const updated = event.data.members.find((m: Member) => m.id === prev.id);
+            if (updated) {
+              try {
+                localStorage.setItem("ftl_member_session", JSON.stringify(updated));
+              } catch (e) {}
+              return updated;
+            }
+            return prev;
+          });
+        }
+      };
+      return () => bc.close();
+    }
   }, []);
 
   const loginStaff = (email: string, pass: string): { success: boolean; message: string } => {
@@ -157,7 +178,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         localStorage.setItem("ftl_member_session", JSON.stringify(matched));
         localStorage.setItem("ftl_portal_member_id", matched.id);
       } catch (e) {}
-      return { success: true, member: matched, message: `Selamat datang kembali, ${matched.full_name}!` };
+
+      const isPending = matched.status === "pending_approval" || matched.payment_proof_status === "pending";
+      const welcomeMsg = isPending
+        ? `Selamat datang kembali, ${matched.full_name}! Akun Anda sedang menunggu persetujuan (approval) staf admin FTL Gym.`
+        : `Selamat datang kembali, ${matched.full_name}!`;
+
+      return { success: true, member: matched, message: welcomeMsg };
     }
 
     return {
@@ -185,15 +212,18 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       full_name: cleanName,
       phone: cleanPhone,
       email: cleanEmail,
-      status: "active",
+      status: "pending_approval",
       package_type: "1_month",
+      payment_proof_status: "pending",
       package_price: 250000,
       start_date: new Date().toISOString().slice(0, 10),
       expiry_date: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10),
       qr_code_data: "FTL:" + cleanName.toUpperCase().replace(/\s+/g, "-") + ":" + Date.now(),
-      selected_coach_id: "coach-dian",
-      selected_coach_name: "Coach Dian",
-      selected_coach_sessions: 12,
+      selected_coach_id: undefined,
+      selected_coach_name: undefined,
+      selected_coach_sessions: 0,
+      pt_sessions_remaining: 0,
+      pt_sessions_used: 0,
       created_at: new Date().toISOString(),
       password: data.password,
     };
@@ -213,7 +243,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
       parsed.members = [newMember, ...parsed.members.filter((m: Member) => m.id !== newMember.id)];
 
-      // Record financial revenue transaction
+      // Record pending registration transaction awaiting staff approval/cashier payment
       if (!Array.isArray(parsed.transactions)) {
         parsed.transactions = [];
       }
@@ -224,16 +254,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         member_phone: newMember.phone,
         invoice_code: `INV-REG-${Date.now().toString().slice(-6)}`,
         transaction_type: "membership",
-        title: "Pendaftaran Member Baru (Paket 1 Bulan)",
-        description: `Pemasukan biaya pendaftaran keanggotaan aktif member ${newMember.full_name}`,
+        title: "Pendaftaran Member Baru (Menunggu Approval)",
+        description: `Pendaftaran baru ${newMember.full_name}. Menunggu verifikasi & persetujuan staf front desk.`,
         amount: 250000,
-        payment_method: "online",
-        payment_channel: "transfer_bank",
-        status: "paid",
+        payment_method: "tunai",
+        payment_channel: "frontdesk_cash",
+        status: "pending",
         created_at: new Date().toISOString(),
         expires_at: new Date(Date.now() + 3600000).toISOString(),
-        paid_at: new Date().toISOString(),
-        confirmed_by: "Sistem Otomatis FTL",
+        confirmed_by: undefined,
         details: {
           package_type: "1_month",
         },
@@ -254,7 +283,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return {
       success: true,
       member: newMember,
-      message: `Pendaftaran berhasil! Akun Anda aktif dan tercatat resmi di sistem FTL Gym.`,
+      message: `Pendaftaran berhasil! Akun Anda sedang dalam antrean verifikasi & persetujuan (approval) staf admin FTL Gym.`,
     };
   };
 

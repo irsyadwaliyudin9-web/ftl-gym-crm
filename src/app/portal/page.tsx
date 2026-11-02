@@ -53,7 +53,7 @@ export default function CustomerPortalPage() {
   const [fullName, setFullName] = useState("");
   const [phone, setPhone] = useState("");
   const [email, setEmail] = useState("");
-  const [includeCoach, setIncludeCoach] = useState(true);
+  const [includeCoach, setIncludeCoach] = useState(false);
   const [selectedCoachId, setSelectedCoachId] = useState<string>("coach-dian");
   const [ptSessionsCount, setPtSessionsCount] = useState<number>(12);
   const [isSubmitting, setIsSubmitting] = useState(false);

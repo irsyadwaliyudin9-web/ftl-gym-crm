@@ -53,32 +53,37 @@ export default function MemberLayout({ children }: { children: React.ReactNode }
 
   return (
     <div className="min-h-screen bg-gym-base text-zinc-100 flex flex-col selection:bg-neon selection:text-black">
-      {/* Top Mobile-First App Header */}
-      <header className="sticky top-0 z-40 bg-gym-base/95 backdrop-blur-md border-b border-zinc-800 px-4 py-3">
-        <div className="max-w-md mx-auto flex items-center justify-between">
-          <Link href="/member/dashboard" className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-xl bg-neon text-gym-base font-black flex items-center justify-center text-sm shadow-neon-sm">
+      {/* Top Professional Header (Mobile & Desktop Responsive) */}
+      <header className="sticky top-0 z-40 bg-gym-card/95 backdrop-blur-md border-b border-zinc-800 px-4 sm:px-6 py-3.5 shadow-md">
+        <div className="max-w-6xl mx-auto flex items-center justify-between gap-3">
+          <Link href="/member/dashboard" className="flex items-center gap-3 group">
+            <div className="w-9 h-9 rounded-xl bg-neon text-gym-base font-black flex items-center justify-center text-sm shadow-neon-sm group-hover:scale-105 transition-transform">
               FTL
             </div>
             <div>
-              <div className="text-sm font-black text-white leading-tight flex items-center gap-1.5">
-                <span>MEMBER APP</span>
-                <span className="text-[9px] bg-neon/20 text-neon font-black px-1.5 py-0.2 rounded border border-neon/40">
+              <div className="text-sm sm:text-base font-black text-white leading-tight flex items-center gap-1.5">
+                <span>DASHBOARD MEMBER</span>
+                <span className="text-[9px] bg-neon/20 text-neon font-black px-1.5 py-0.5 rounded border border-neon/40">
                   SPORT
                 </span>
               </div>
-              <div className="text-[10px] text-zinc-400 font-medium">Faster Than Light Gym</div>
+              <div className="text-[11px] text-zinc-400 font-medium">Faster Than Light Gym • Jakarta Pusat</div>
             </div>
           </Link>
 
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-3">
             {currentMember && (
-              <div className="text-right hidden sm:block">
-                <div className="text-xs font-black text-white truncate max-w-[120px]">
-                  {currentMember.full_name}
+              <div className="flex items-center gap-2.5 bg-gym-elevated/80 border border-zinc-800 rounded-xl px-3 py-1.5">
+                <div className="w-7 h-7 rounded-lg bg-zinc-800 text-neon flex items-center justify-center text-xs font-black">
+                  {currentMember.full_name ? currentMember.full_name.charAt(0).toUpperCase() : "M"}
                 </div>
-                <div className="text-[10px] text-zinc-400 font-mono">
-                  {currentMember.member_code}
+                <div className="text-right">
+                  <div className="text-xs font-black text-white truncate max-w-[140px] sm:max-w-[200px]">
+                    {currentMember.full_name}
+                  </div>
+                  <div className="text-[10px] text-zinc-400 font-mono">
+                    {currentMember.member_code} • {currentMember.status === "pending_approval" ? "Menunggu Approval" : "Aktif"}
+                  </div>
                 </div>
               </div>
             )}
@@ -86,22 +91,23 @@ export default function MemberLayout({ children }: { children: React.ReactNode }
             <button
               onClick={handleLogout}
               title="Keluar Akun Member"
-              className="p-2 rounded-xl bg-zinc-900 border border-zinc-800 text-zinc-400 hover:text-rose-400 hover:bg-rose-950/30 transition-colors"
+              className="p-2 sm:px-3 sm:py-2 rounded-xl bg-zinc-900 border border-zinc-800 text-zinc-400 hover:text-rose-400 hover:bg-rose-950/30 transition-colors flex items-center gap-1.5 text-xs font-bold"
             >
               <LogOut className="w-4 h-4" />
+              <span className="hidden sm:inline">Keluar</span>
             </button>
           </div>
         </div>
       </header>
 
-      {/* Main Content Area (Mobile-First max-w-md centered) */}
-      <main className="flex-1 w-full max-w-md mx-auto px-4 py-4 space-y-6">
+      {/* Main Content Area (Spacious & Clean like Staff Dashboard) */}
+      <main className="flex-1 w-full max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-5 space-y-6">
         {children}
       </main>
 
-      {/* Bottom Safe Area Padding & Mini Watermark */}
-      <footer className="w-full max-w-md mx-auto text-center py-4 text-[10px] text-zinc-600">
-        FTL Gym Member Ecosystem · v2.0 Mobile
+      {/* Bottom Footer */}
+      <footer className="w-full max-w-6xl mx-auto text-center py-5 text-xs text-zinc-600 border-t border-zinc-800/80">
+        FTL Gym Member Ecosystem · Portal Khusus Member Beban & Fitness · © 2026 FTL Gym
       </footer>
     </div>
   );
