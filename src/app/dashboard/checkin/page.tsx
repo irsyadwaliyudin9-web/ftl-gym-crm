@@ -4,7 +4,7 @@ import React, { useState, useEffect, useRef } from "react";
 import { useGymData } from "@/context/GymDataContext";
 import { Member, CheckInStatus } from "@/lib/types";
 import { soundManager } from "@/components/common/SoundEffects";
-import { formatWIBDate, formatWIBTime } from "@/lib/utils";
+import { formatWIBDate, formatWIBTime, formatRupiah } from "@/lib/utils";
 import jsQR from "jsqr";
 import {
   QrCode,
@@ -19,15 +19,60 @@ import {
   RotateCw,
   Hourglass,
   MessageCircle,
+  DollarSign,
+  Clock,
+  CreditCard,
+  Receipt,
 } from "lucide-react";
 import { Card } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 
+function PendingCashCountdown({ expiresAt }: { expiresAt: string }) {
+  const [timeLeft, setTimeLeft] = useState<{ mins: number; secs: number; isExpired: boolean }>({
+    mins: 0,
+    secs: 0,
+    isExpired: false,
+  });
+
+  useEffect(() => {
+    const calc = () => {
+      const diffSecs = Math.max(0, Math.floor((new Date(expiresAt).getTime() - Date.now()) / 1000));
+      if (diffSecs <= 0) {
+        setTimeLeft({ mins: 0, secs: 0, isExpired: true });
+      } else {
+        const mins = Math.floor(diffSecs / 60);
+        const secs = diffSecs % 60;
+        setTimeLeft({ mins, secs, isExpired: false });
+      }
+    };
+    calc();
+    const interval = setInterval(calc, 1000);
+    return () => clearInterval(interval);
+  }, [expiresAt]);
+
+  if (timeLeft.isExpired) {
+    return (
+      <span className="text-rose-400 font-mono font-black text-[11px] bg-rose-500/10 px-2 py-0.5 rounded border border-rose-500/30">
+        HANGUS / EXPIRED
+      </span>
+    );
+  }
+
+  const mm = String(timeLeft.mins).padStart(2, "0");
+  const ss = String(timeLeft.secs).padStart(2, "0");
+  return (
+    <span className="font-mono font-black text-amber-400 bg-amber-500/10 px-2 py-0.5 rounded border border-amber-500/30 text-xs">
+      ⏳ {mm}:{ss}
+    </span>
+  );
+}
+
 export default function FrontDeskScannerPage() {
-  const { checkInMember, checkIns } = useGymData();
+  const { checkInMember, checkIns, transactions, confirmCashTransaction } = useGymData();
 
   const [inputQuery, setInputQuery] = useState("");
+  const [cashNotice, setCashNotice] = useState<string | null>(null);
   const [activeScanMode, setActiveScanMode] = useState<"camera" | "manual">("camera");
   const [cameraFacing, setCameraFacing] = useState<"user" | "environment">("environment");
   const [isMirror, setIsMirror] = useState(false); // DEFAULT FALSE: Kamera normal / anti-mirror agar QR terbaca jelas!
@@ -204,8 +249,47 @@ export default function FrontDeskScannerPage() {
     return () => window.removeEventListener("keydown", handleGlobalKeyDown);
   }, []);
 
+  const handleConfirmCash = (invoiceCode: string) => {
+    const res = confirmCashTransaction(invoiceCode);
+    if (res.success) {
+      soundManager.playSuccessBeep();
+      setCashNotice(`✓ ${res.message}`);
+      setTimeout(() => setCashNotice(null), 5000);
+    } else {
+      soundManager.playErrorBeep();
+      setCashNotice(`✕ Gagal konfirmasi: ${res.message}`);
+      setTimeout(() => setCashNotice(null), 5000);
+    }
+  };
+
   const handleExecuteCheckIn = (query: string, method: "qr_scan" | "barcode" | "manual_search" = "qr_scan") => {
     if (!query.trim()) return;
+
+    // Check if query is an invoice code
+    const cleanQuery = query.trim().toUpperCase();
+    const matchingTx = transactions.find(
+      (tx) => tx.invoice_code.toUpperCase() === cleanQuery || cleanQuery.includes(tx.invoice_code.toUpperCase())
+    );
+
+    if (matchingTx) {
+      if (matchingTx.status === "paid") {
+        soundManager.playSuccessBeep();
+        setDetectedScanNotice(`Invoice ${matchingTx.invoice_code} SUDAH LUNAS (${matchingTx.title}).`);
+        setInputQuery("");
+        return;
+      }
+      if (matchingTx.status === "expired") {
+        soundManager.playErrorBeep();
+        setDetectedScanNotice(`Invoice ${matchingTx.invoice_code} SUDAH HANGUS / EXPIRED.`);
+        setInputQuery("");
+        return;
+      }
+      // Pending cash order - confirm it!
+      handleConfirmCash(matchingTx.invoice_code);
+      setDetectedScanNotice(`✓ Memproses konfirmasi tunai untuk ${matchingTx.invoice_code}...`);
+      setInputQuery("");
+      return;
+    }
 
     const result = checkInMember(query, method);
     setLastResult({
@@ -559,6 +643,111 @@ export default function FrontDeskScannerPage() {
           </Card>
         </div>
       </div>
+
+      {/* Toast Notice Feedback */}
+      {cashNotice && (
+        <div className="p-4 rounded-xl bg-neon text-gym-base font-black text-xs sm:text-sm flex items-center justify-between shadow-neon animate-in fade-in slide-in-from-top-2">
+          <div className="flex items-center gap-2">
+            <CheckCircle2 className="w-5 h-5 text-gym-base" />
+            <span>{cashNotice}</span>
+          </div>
+          <button onClick={() => setCashNotice(null)} className="text-xs font-bold underline">
+            Tutup
+          </button>
+        </div>
+      )}
+
+      {/* Kasir Front Desk: Antrean Pembayaran Tunai Member */}
+      <Card className="space-y-4 border-amber-500/30 bg-gradient-to-br from-gym-card via-zinc-950 to-amber-950/10">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-3 border-b border-zinc-800">
+          <div className="flex items-center gap-2.5">
+            <div className="w-8 h-8 rounded-lg bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-amber-400">
+              <DollarSign className="w-4 h-4" />
+            </div>
+            <div>
+              <div className="flex items-center gap-2">
+                <h2 className="text-base font-black text-white">Kasir Front Desk: Antrean Pembayaran Tunai</h2>
+                <Badge
+                  variant={transactions.filter((t) => t.payment_method === "tunai" && t.status === "pending").length > 0 ? "warning" : "neutral"}
+                  size="sm"
+                  className="font-black"
+                >
+                  {transactions.filter((t) => t.payment_method === "tunai" && t.status === "pending").length} PENDING
+                </Badge>
+              </div>
+              <p className="text-xs text-zinc-400">
+                Member memesan via Member App. Invoice tunai berlaku <span className="text-amber-400 font-bold">1 Jam (60 Menit)</span> sebelum hangus otomatis.
+              </p>
+            </div>
+          </div>
+
+          <div className="text-right">
+            <span className="text-[11px] text-zinc-500">Scan Barcode / Ketik No. Invoice di atas untuk konfirmasi cepat</span>
+          </div>
+        </div>
+
+        {transactions.filter((t) => t.payment_method === "tunai" && t.status === "pending").length === 0 ? (
+          <div className="p-6 text-center rounded-xl bg-gym-elevated/40 border border-dashed border-zinc-800 space-y-1">
+            <Receipt className="w-6 h-6 text-zinc-600 mx-auto mb-1" />
+            <p className="text-xs font-bold text-zinc-300">Tidak ada antrean pembayaran tunai saat ini</p>
+            <p className="text-[11px] text-zinc-500">
+              Setiap kali member memilih opsi "Bayar Tunai di Gym", pesanan baru akan muncul di sini secara real-time dengan timer mundur 60 menit.
+            </p>
+          </div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full text-left text-xs">
+              <thead className="bg-gym-elevated/70 text-zinc-400 uppercase text-[10px] font-bold border-b border-zinc-800">
+                <tr>
+                  <th className="py-2.5 px-3">Sisa Waktu (60m)</th>
+                  <th className="py-2.5 px-3">No. Invoice</th>
+                  <th className="py-2.5 px-3">Member</th>
+                  <th className="py-2.5 px-3">Item / Paket</th>
+                  <th className="py-2.5 px-3">Total Bayar</th>
+                  <th className="py-2.5 px-3 text-right">Aksi Kasir</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-zinc-800">
+                {transactions
+                  .filter((t) => t.payment_method === "tunai" && t.status === "pending")
+                  .map((tx) => (
+                    <tr key={tx.id} className="hover:bg-amber-500/5 transition-colors">
+                      <td className="py-3 px-3">
+                        <PendingCashCountdown expiresAt={tx.expires_at} />
+                      </td>
+                      <td className="py-3 px-3">
+                        <span className="font-mono font-black text-amber-300 text-xs">{tx.invoice_code}</span>
+                        <div className="text-[10px] text-zinc-500 font-mono">Dibuat: {formatWIBTime(tx.created_at)}</div>
+                      </td>
+                      <td className="py-3 px-3">
+                        <div className="font-bold text-white">{tx.member_name}</div>
+                        <div className="text-[10px] font-mono text-zinc-400">{tx.member_phone || "-"}</div>
+                      </td>
+                      <td className="py-3 px-3">
+                        <div className="font-bold text-zinc-200">{tx.title}</div>
+                        <div className="text-[10px] text-zinc-400">{tx.details || "Membership / PT Session"}</div>
+                      </td>
+                      <td className="py-3 px-3">
+                        <div className="font-black text-neon text-sm">{formatRupiah(tx.amount)}</div>
+                      </td>
+                      <td className="py-3 px-3 text-right">
+                        <Button
+                          variant="neon"
+                          size="sm"
+                          onClick={() => handleConfirmCash(tx.invoice_code)}
+                          className="font-black text-xs shadow-sm hover:scale-105 transition-all"
+                        >
+                          <CheckCircle2 className="w-3.5 h-3.5 mr-1" />
+                          <span>Konfirmasi Lunas (Terima Uang)</span>
+                        </Button>
+                      </td>
+                    </tr>
+                  ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </Card>
 
       {/* Check-in Log Table of Today */}
       <Card className="space-y-4">

@@ -116,11 +116,11 @@ export default function LoginPage() {
         {/* Back to Customer Portal */}
         <div className="pt-4 border-t border-zinc-800 text-center">
           <Link
-            href="/portal"
+            href="/"
             className="inline-flex items-center gap-1.5 text-xs text-zinc-400 hover:text-neon transition-colors font-medium"
           >
             <ArrowLeft className="w-3.5 h-3.5" />
-            <span>Bukan Staf? Kembali ke Portal Member FTL Gym</span>
+            <span>Bukan Staf? Kembali ke Pintu Masuk Member App</span>
           </Link>
         </div>
       </div>

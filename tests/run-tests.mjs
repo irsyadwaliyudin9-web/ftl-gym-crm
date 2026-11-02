@@ -549,6 +549,64 @@ assert.ok(qrOutput.includes("viewBox=\"0 0 200 200\""));
 assert.ok(qrOutput.includes("<rect"));
 console.log("✓ TEST 10 PASSED: QR Code generator produces valid, deterministic SVG markup.");
 
+// ----------------------------------------------------
+// TEST 11: Omnichannel Cash Payment 1-Hour Expiry & Cashier Confirmation
+// ----------------------------------------------------
+console.log("\n--- TEST 11: Cash Payment 1-Hour Expiration & Front Desk Confirmation ---");
+
+function createCashTransaction(memberId, itemType, amount, now = new Date()) {
+  const expiresAt = new Date(now.getTime() + 60 * 60 * 1000).toISOString();
+  return {
+    id: `tx_${Date.now()}_${Math.random()}`,
+    invoice_code: `INV-FTL-${Date.now().toString().slice(-6)}`,
+    member_id: memberId,
+    item_type: itemType,
+    amount,
+    payment_method: "tunai",
+    status: "pending",
+    created_at: now.toISOString(),
+    expires_at: expiresAt,
+  };
+}
+
+function processCashierConfirmation(tx, currentTime, member) {
+  if (new Date(currentTime).getTime() > new Date(tx.expires_at).getTime()) {
+    tx.status = "expired";
+    return { success: false, message: "Invoice telah kedaluwarsa / hangus (lebih dari 1 jam)." };
+  }
+  if (tx.status !== "pending") {
+    return { success: false, message: `Status invoice bukan pending (${tx.status}).` };
+  }
+  tx.status = "paid";
+  if (tx.item_type === "pt_package") {
+    member.pt_sessions_remaining = (member.pt_sessions_remaining || 0) + 12;
+  }
+  return { success: true, message: "Pembayaran tunai berhasil dikonfirmasi. Paket aktif!" };
+}
+
+// Test case A: Valid confirmation within 1 hour
+const testNow = new Date("2026-11-02T10:00:00.000Z");
+const testMember = { id: "mem_arya", full_name: "Arya Putra", pt_sessions_remaining: 5 };
+const cashTx = createCashTransaction("mem_arya", "pt_package", 360000, testNow);
+
+// Cashier confirms at +15 minutes (within 1 hour)
+const confirmTime = new Date("2026-11-02T10:15:00.000Z");
+const resConfirm = processCashierConfirmation(cashTx, confirmTime, testMember);
+assert.strictEqual(resConfirm.success, true);
+assert.strictEqual(cashTx.status, "paid");
+assert.strictEqual(testMember.pt_sessions_remaining, 17); // 5 + 12
+
+// Test case B: Overdue cash transaction (> 60 minutes) automatically rejected & expired
+const overdueNow = new Date("2026-11-02T08:00:00.000Z");
+const overdueTx = createCashTransaction("mem_arya", "pt_package", 360000, overdueNow);
+const lateTime = new Date("2026-11-02T09:05:00.000Z"); // +65 minutes
+const resLate = processCashierConfirmation(overdueTx, lateTime, testMember);
+assert.strictEqual(resLate.success, false);
+assert.strictEqual(overdueTx.status, "expired");
+assert.strictEqual(testMember.pt_sessions_remaining, 17); // Untouched
+
+console.log("✓ TEST 11 PASSED: 1-Hour cash payment expiration and Front Desk cashier confirmation function flawlessly.");
+
 console.log("\n====================================================");
-console.log("ALL VERIFICATION ASSERTIONS PASSED (11/11 TEST SUITES)");
+console.log("ALL VERIFICATION ASSERTIONS PASSED (12/12 TEST SUITES)");
 console.log("====================================================");

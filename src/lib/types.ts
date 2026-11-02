@@ -3,11 +3,64 @@
 // ==============================================================================
 
 export type UserRole = 
+  | 'member'
+  | 'admin'
+  | 'pt'
   | 'superadmin'
   | 'club_manager'
   | 'front_desk'
   | 'personal_trainer'
   | 'sales';
+
+export type TransactionPaymentMethod = 'online' | 'tunai';
+export type TransactionStatus = 'pending' | 'paid' | 'expired';
+export type TransactionType = 'membership' | 'pt_package';
+
+export interface Transaction {
+  id: string;
+  tenant_id?: string;
+  club_id?: string;
+  member_id: string;
+  member_name: string;
+  member_phone: string;
+  invoice_code: string; // e.g. "INV-FTL-20261102-7891"
+  transaction_type: TransactionType;
+  title: string;
+  description: string;
+  amount: number;
+  payment_method: TransactionPaymentMethod;
+  payment_channel?: string; // 'midtrans_qris', 'midtrans_va_bca', 'midtrans_gopay', 'tunai_frontdesk'
+  status: TransactionStatus;
+  created_at: string;
+  expires_at: string; // created_at + 1 hour (60 minutes)
+  paid_at?: string;
+  confirmed_by?: string;
+  details?: {
+    package_type?: PackageType;
+    coach_id?: string;
+    coach_name?: string;
+    sessions_count?: number;
+    additional_days?: number;
+  };
+}
+
+export interface WeightliftingSession {
+  id: string;
+  tenant_id?: string;
+  club_id?: string;
+  name: string;
+  category: string;
+  instructor_name: string;
+  instructor_id: string;
+  day_of_week: number;
+  start_time: string;
+  end_time: string;
+  capacity_limit: number;
+  booked_count: number;
+  room: string;
+  is_active: boolean;
+  booked_member_ids?: string[];
+}
 
 export type SubscriptionPlan = 'single_club' | 'multi_club';
 
@@ -73,6 +126,7 @@ export interface Member {
   notes?: string;
   assigned_sales_id?: string;
   created_at: string;
+  password?: string; // Optional for consumer credentials
   // Approval & Registration fields
   payment_proof_status?: 'pending' | 'approved' | 'rejected';
   rejection_reason?: string;

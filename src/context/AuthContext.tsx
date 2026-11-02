@@ -1,7 +1,7 @@
 "use client";
 
 import React, { createContext, useContext, useState, useEffect } from "react";
-import { UserProfile, UserRole } from "@/lib/types";
+import { UserProfile, UserRole, Member } from "@/lib/types";
 
 interface AuthContextType {
   currentUser: UserProfile;
@@ -9,8 +9,14 @@ interface AuthContextType {
   setCurrentRole: (role: UserRole) => void;
   isAuthenticated: boolean;
   isStaffAuthenticated: boolean;
+  isMemberAuthenticated: boolean;
+  currentMember: Member | null;
+  setCurrentMember: (member: Member | null) => void;
   loginStaff: (email: string, pass: string) => { success: boolean; message: string };
   logoutStaff: () => void;
+  loginMember: (identifier: string, pass?: string) => { success: boolean; member?: Member; message: string };
+  registerMember: (data: { fullName: string; phone: string; email: string; password?: string }) => { success: boolean; member?: Member; message: string };
+  logoutMember: () => void;
   loginAsRole: (role: UserRole) => void;
   logout: () => void;
 }
@@ -34,9 +40,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [currentRole, setRoleState] = useState<UserRole>("club_manager");
   const [currentUser, setCurrentUser] = useState<UserProfile>(OFFICIAL_STAFF_USER);
   const [isStaffAuthenticated, setIsStaffAuthenticated] = useState<boolean>(false);
+  const [isMemberAuthenticated, setIsMemberAuthenticated] = useState<boolean>(false);
+  const [currentMember, setCurrentMember] = useState<Member | null>(null);
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
 
-  // Restore staff session on mount
+  // Restore staff and member sessions on mount
   useEffect(() => {
     if (typeof window !== "undefined") {
       try {
@@ -45,6 +53,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           setIsStaffAuthenticated(true);
           setIsAuthenticated(true);
           setCurrentUser(OFFICIAL_STAFF_USER);
+        }
+
+        const savedMember = localStorage.getItem("ftl_member_session");
+        if (savedMember) {
+          const parsed = JSON.parse(savedMember);
+          if (parsed && parsed.id) {
+            setCurrentMember(parsed);
+            setIsMemberAuthenticated(true);
+          }
         }
       } catch (e) {}
     }
@@ -79,6 +96,165 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     } catch (e) {}
   };
 
+  const loginMember = (identifier: string, pass?: string): { success: boolean; member?: Member; message: string } => {
+    const clean = identifier.trim().toLowerCase();
+    const cleanDigits = clean.replace(/[^0-9]/g, "");
+
+    // Try finding in localStorage state
+    let allMembers: Member[] = [];
+    if (typeof window !== "undefined") {
+      try {
+        const raw = localStorage.getItem("fitlead_crm_state");
+        if (raw) {
+          const parsed = JSON.parse(raw);
+          if (parsed.members && Array.isArray(parsed.members)) {
+            allMembers = parsed.members;
+          }
+        }
+      } catch (e) {}
+    }
+
+    // Default fallback demo members if none yet in localStorage
+    if (allMembers.length === 0) {
+      allMembers = [
+        {
+          id: "mem-0801",
+          tenant_id: "tenant-ftl",
+          club_id: "club-ftl-01",
+          member_code: "FTL-0801",
+          full_name: "Arya Putra Perdana",
+          phone: "+628123456001",
+          email: "arya.perdana@gmail.com",
+          status: "active",
+          package_type: "1_year",
+          package_price: 2200000,
+          start_date: "2026-01-10",
+          expiry_date: "2027-01-10",
+          qr_code_data: "FTL:FTL-0801:ARYA-PUTRA",
+          selected_coach_id: "coach-dian",
+          selected_coach_name: "Coach Dian",
+          selected_coach_sessions: 12,
+          created_at: "2026-01-10T10:00:00Z",
+        },
+      ];
+    }
+
+    const matched = allMembers.find((m) => {
+      const mEmail = (m.email || "").trim().toLowerCase();
+      const mPhone = m.phone.replace(/[^0-9]/g, "");
+      const mCode = m.member_code.trim().toLowerCase();
+
+      if (clean && mEmail === clean) return true;
+      if (cleanDigits && mPhone && mPhone.endsWith(cleanDigits)) return true;
+      if (clean && mCode === clean) return true;
+      return false;
+    });
+
+    if (matched) {
+      setCurrentMember(matched);
+      setIsMemberAuthenticated(true);
+      try {
+        localStorage.setItem("ftl_member_session", JSON.stringify(matched));
+        localStorage.setItem("ftl_portal_member_id", matched.id);
+      } catch (e) {}
+      return { success: true, member: matched, message: `Selamat datang kembali, ${matched.full_name}!` };
+    }
+
+    // If identifier not found, create a demo account for first-time login
+    const demoMember: Member = {
+      id: "mem-" + Date.now().toString(36),
+      tenant_id: "tenant-ftl",
+      club_id: "club-ftl-01",
+      member_code: "FTL-" + Math.floor(1000 + Math.random() * 9000),
+      full_name: identifier.includes("@") ? identifier.split("@")[0].toUpperCase() : "Member FTL",
+      phone: cleanDigits || "+6281234567890",
+      email: identifier.includes("@") ? clean : undefined,
+      status: "active",
+      package_type: "6_months",
+      package_price: 1200000,
+      start_date: new Date().toISOString().slice(0, 10),
+      expiry_date: new Date(Date.now() + 180 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10),
+      qr_code_data: "FTL:NEW:" + Date.now(),
+      selected_coach_id: "coach-dian",
+      selected_coach_name: "Coach Dian",
+      selected_coach_sessions: 12,
+      created_at: new Date().toISOString(),
+    };
+
+    setCurrentMember(demoMember);
+    setIsMemberAuthenticated(true);
+    try {
+      localStorage.setItem("ftl_member_session", JSON.stringify(demoMember));
+      localStorage.setItem("ftl_portal_member_id", demoMember.id);
+    } catch (e) {}
+
+    return { success: true, member: demoMember, message: `Akun member aktif! Selamat datang di FTL Gym.` };
+  };
+
+  const registerMember = (data: {
+    fullName: string;
+    phone: string;
+    email: string;
+    password?: string;
+  }): { success: boolean; member?: Member; message: string } => {
+    const cleanPhone = data.phone.trim();
+    const cleanEmail = data.email.trim().toLowerCase();
+    const cleanName = data.fullName.trim();
+
+    const newMember: Member = {
+      id: "mem-" + Date.now().toString(36),
+      tenant_id: "tenant-ftl",
+      club_id: "club-ftl-01",
+      member_code: "FTL-" + Math.floor(1000 + Math.random() * 9000),
+      full_name: cleanName,
+      phone: cleanPhone,
+      email: cleanEmail,
+      status: "active",
+      package_type: "1_month",
+      package_price: 250000,
+      start_date: new Date().toISOString().slice(0, 10),
+      expiry_date: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10),
+      qr_code_data: "FTL:" + cleanName.toUpperCase().replace(/\s+/g, "-") + ":" + Date.now(),
+      selected_coach_id: "coach-dian",
+      selected_coach_name: "Coach Dian",
+      selected_coach_sessions: 12,
+      created_at: new Date().toISOString(),
+      password: data.password,
+    };
+
+    setCurrentMember(newMember);
+    setIsMemberAuthenticated(true);
+
+    try {
+      localStorage.setItem("ftl_member_session", JSON.stringify(newMember));
+      localStorage.setItem("ftl_portal_member_id", newMember.id);
+
+      // Append to fitlead_crm_state if present
+      const raw = localStorage.getItem("fitlead_crm_state");
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        if (parsed.members && Array.isArray(parsed.members)) {
+          parsed.members.unshift(newMember);
+          localStorage.setItem("fitlead_crm_state", JSON.stringify(parsed));
+        }
+      }
+    } catch (e) {}
+
+    return {
+      success: true,
+      member: newMember,
+      message: `Pendaftaran berhasil! Selamat bergabung di FTL Gym, ${newMember.full_name}.`,
+    };
+  };
+
+  const logoutMember = () => {
+    setIsMemberAuthenticated(false);
+    setCurrentMember(null);
+    try {
+      localStorage.removeItem("ftl_member_session");
+    } catch (e) {}
+  };
+
   const setCurrentRole = (role: UserRole) => {
     setRoleState(role);
   };
@@ -90,6 +266,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const logout = () => {
     logoutStaff();
+    logoutMember();
   };
 
   return (
@@ -100,8 +277,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setCurrentRole,
         isAuthenticated,
         isStaffAuthenticated,
+        isMemberAuthenticated,
+        currentMember,
+        setCurrentMember,
         loginStaff,
         logoutStaff,
+        loginMember,
+        registerMember,
+        logoutMember,
         loginAsRole,
         logout,
       }}

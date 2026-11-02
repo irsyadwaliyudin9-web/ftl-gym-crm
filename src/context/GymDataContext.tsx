@@ -20,9 +20,14 @@ import {
   CheckInStatus,
   DailyHourlyTraffic,
   Coach,
+  Transaction,
+  WeightliftingSession,
+  TransactionStatus,
+  TransactionPaymentMethod,
+  TransactionType,
 } from "@/lib/types";
 import { soundManager } from "@/components/common/SoundEffects";
-import { exportToCSV, formatWIBDate, formatWIBDateTime, isExpiringSoon, isPackageExpired } from "@/lib/utils";
+import { exportToCSV, formatRupiah, formatWIBDate, formatWIBDateTime, isExpiringSoon, isPackageExpired } from "@/lib/utils";
 
 // ==============================================================================
 // INITIAL SEED DATA (FTL GYM PROPRIETARY SYSTEM)
@@ -926,6 +931,137 @@ const SEED_POS_TRANSACTIONS: POSTransaction[] = [
   },
 ];
 
+const SEED_WEIGHTLIFTING_SESSIONS: WeightliftingSession[] = [
+  {
+    id: "wl-sess-01",
+    name: "Basic Powerlifting (Squat, Bench, Deadlift)",
+    category: "Powerlifting",
+    instructor_name: "Coach Dian",
+    instructor_id: "coach-dian",
+    day_of_week: 1, // Senin
+    start_time: "18:30",
+    end_time: "20:00",
+    capacity_limit: 8,
+    booked_count: 5,
+    room: "Platform Barbell & Power Rack",
+    is_active: true,
+    booked_member_ids: ["mem-0801", "mem-0802"],
+  },
+  {
+    id: "wl-sess-02",
+    name: "Hypertrophy Muscle Camp (Chest & Biceps)",
+    category: "Hypertrophy",
+    instructor_name: "Coach Rendy",
+    instructor_id: "coach-rendy",
+    day_of_week: 2, // Selasa
+    start_time: "19:00",
+    end_time: "20:30",
+    capacity_limit: 8,
+    booked_count: 6,
+    room: "Dumbbell Free Weight Area",
+    is_active: true,
+    booked_member_ids: ["mem-0804"],
+  },
+  {
+    id: "wl-sess-03",
+    name: "Deadlift & Posterior Chain Heavy Session",
+    category: "Strength",
+    instructor_name: "Coach Kevin",
+    instructor_id: "coach-kevin",
+    day_of_week: 3, // Rabu
+    start_time: "16:00",
+    end_time: "17:30",
+    capacity_limit: 6,
+    booked_count: 4,
+    room: "Olympic Deadlift Platform",
+    is_active: true,
+    booked_member_ids: ["mem-0801"],
+  },
+  {
+    id: "wl-sess-04",
+    name: "Upper Body Heavy Strength & Back Sculpting",
+    category: "Strength",
+    instructor_name: "Coach Maya",
+    instructor_id: "coach-maya",
+    day_of_week: 5, // Jumat
+    start_time: "17:00",
+    end_time: "18:30",
+    capacity_limit: 8,
+    booked_count: 3,
+    room: "Plate-Loaded Strength Zone",
+    is_active: true,
+    booked_member_ids: [],
+  },
+];
+
+const SEED_TRANSACTIONS: Transaction[] = [
+  {
+    id: "tx-init-01",
+    member_id: "mem-0801",
+    member_name: "Arya Putra Perdana",
+    member_phone: "+628123456001",
+    invoice_code: "INV-FTL-20261102-3601",
+    transaction_type: "pt_package",
+    title: "Paket 12 Sesi Coach/PT (Coach Dian)",
+    description: "Pendampingan teknik powerlifting dan hipertrofi intensif",
+    amount: 360000,
+    payment_method: "tunai",
+    payment_channel: "tunai_frontdesk",
+    status: "pending",
+    created_at: new Date(Date.now() - 6 * 60 * 1000).toISOString(),
+    expires_at: new Date(Date.now() + 54 * 60 * 1000).toISOString(), // ~54 mins remaining countdown
+    details: {
+      coach_id: "coach-dian",
+      coach_name: "Coach Dian",
+      sessions_count: 12,
+    },
+  },
+  {
+    id: "tx-init-02",
+    member_id: "mem-0801",
+    member_name: "Arya Putra Perdana",
+    member_phone: "+628123456001",
+    invoice_code: "INV-FTL-20261025-9921",
+    transaction_type: "membership",
+    title: "Membership FTL Gym 1 Tahun (VIP)",
+    description: "Akses VIP 365 Hari ke seluruh area angkat beban",
+    amount: 2200000,
+    payment_method: "online",
+    payment_channel: "midtrans_qris",
+    status: "paid",
+    created_at: "2026-10-25T09:00:00Z",
+    expires_at: "2026-10-25T10:00:00Z",
+    paid_at: "2026-10-25T09:02:14Z",
+    details: {
+      package_type: "1_year",
+      additional_days: 365,
+    },
+  },
+  {
+    id: "tx-init-03",
+    member_id: "mem-0804",
+    member_name: "Clarissa Tan",
+    member_phone: "+628123456004",
+    invoice_code: "INV-FTL-20261020-5541",
+    transaction_type: "pt_package",
+    title: "Paket 12 Sesi Coach/PT (Coach Maya)",
+    description: "Latihan beban fokus body sculpting",
+    amount: 360000,
+    payment_method: "tunai",
+    payment_channel: "tunai_frontdesk",
+    status: "paid",
+    created_at: "2026-10-20T14:10:00Z",
+    expires_at: "2026-10-20T15:10:00Z",
+    paid_at: "2026-10-20T14:35:10Z",
+    confirmed_by: "Staf Front Desk (Rian)",
+    details: {
+      coach_id: "coach-maya",
+      coach_name: "Coach Maya",
+      sessions_count: 12,
+    },
+  },
+];
+
 const SEED_CHECKINS: CheckIn[] = [
   {
     id: "chk-01",
@@ -1023,6 +1159,8 @@ interface GymDataContextType {
   posTransactions: POSTransaction[];
   hourlyTraffic: DailyHourlyTraffic[];
   coaches: Coach[];
+  transactions: Transaction[];
+  weightliftingSessions: WeightliftingSession[];
   
   // Stats
   activeMembersCount: number;
@@ -1057,6 +1195,20 @@ interface GymDataContextType {
   processPOSTransaction: (cart: POSCartItem[], paymentMethod: PaymentMethod, memberId?: string) => POSTransaction;
   approveTenant: (tenantId: string) => void;
   rejectTenant: (tenantId: string) => void;
+  createTransaction: (data: {
+    memberId: string;
+    memberName?: string;
+    memberPhone?: string;
+    transactionType: TransactionType;
+    title: string;
+    description: string;
+    amount: number;
+    paymentMethod: TransactionPaymentMethod;
+    paymentChannel?: string;
+    details?: any;
+  }) => Transaction;
+  confirmCashTransaction: (invoiceCode: string, staffUserId?: string) => { success: boolean; message: string; transaction?: Transaction };
+  bookWeightliftingSession: (sessionId: string, memberId: string) => { success: boolean; message: string };
   exportMembersCSV: () => void;
   exportReportsCSV: () => void;
   resetToDemoData: () => void;
@@ -1081,6 +1233,8 @@ export const GymDataProvider: React.FC<{ children: React.ReactNode }> = ({ child
   const [posTransactions, setPosTransactions] = useState<POSTransaction[]>(SEED_POS_TRANSACTIONS);
   const [hourlyTraffic, setHourlyTraffic] = useState<DailyHourlyTraffic[]>(SEED_HOURLY_TRAFFIC);
   const [coaches] = useState<Coach[]>(SEED_COACHES);
+  const [transactions, setTransactions] = useState<Transaction[]>(SEED_TRANSACTIONS);
+  const [weightliftingSessions, setWeightliftingSessions] = useState<WeightliftingSession[]>(SEED_WEIGHTLIFTING_SESSIONS);
 
   // Concurrency refs to eliminate React closure lag and race conditions
   const ptLockRef = useRef<boolean>(false);
@@ -1126,6 +1280,12 @@ export const GymDataProvider: React.FC<{ children: React.ReactNode }> = ({ child
         if (parsed.posTransactions) setPosTransactions(parsed.posTransactions);
         if (parsed.posProducts) setPosProducts(parsed.posProducts);
         if (parsed.tenants) setTenants(parsed.tenants);
+        if (parsed.transactions && Array.isArray(parsed.transactions)) {
+          setTransactions(parsed.transactions);
+        }
+        if (parsed.weightliftingSessions && Array.isArray(parsed.weightliftingSessions)) {
+          setWeightliftingSessions(parsed.weightliftingSessions);
+        }
       }
     } catch (e) {
       console.warn("Could not read local state, using seed defaults", e);
@@ -1144,6 +1304,15 @@ export const GymDataProvider: React.FC<{ children: React.ReactNode }> = ({ child
           setMembers(event.data.members);
           soundManager.playSuccessBeep();
         }
+        if (event.data?.type === "SYNC_TRANSACTIONS" && event.data.transaction) {
+          setTransactions((prev) => {
+            const exists = prev.some((t) => t.id === event.data.transaction.id);
+            if (exists) {
+              return prev.map((t) => (t.id === event.data.transaction.id ? event.data.transaction : t));
+            }
+            return [event.data.transaction, ...prev];
+          });
+        }
       };
     }
 
@@ -1153,6 +1322,9 @@ export const GymDataProvider: React.FC<{ children: React.ReactNode }> = ({ child
           const parsed = JSON.parse(e.newValue);
           if (Array.isArray(parsed.members)) {
             setMembers(parsed.members);
+          }
+          if (Array.isArray(parsed.transactions)) {
+            setTransactions(parsed.transactions);
           }
         } catch (err) {}
       }
@@ -1164,6 +1336,28 @@ export const GymDataProvider: React.FC<{ children: React.ReactNode }> = ({ child
       window.removeEventListener("storage", handleStorageChange);
       if (bc) bc.close();
     };
+  }, []);
+
+  // Auto-expire overdue pending cash transactions (1 hour rule)
+  useEffect(() => {
+    const checkExpiry = () => {
+      const now = new Date();
+      setTransactions((prev) => {
+        let changed = false;
+        const updated = prev.map((tx) => {
+          if (tx.status === "pending" && tx.payment_method === "tunai" && now > new Date(tx.expires_at)) {
+            changed = true;
+            return { ...tx, status: "expired" as const };
+          }
+          return tx;
+        });
+        return changed ? updated : prev;
+      });
+    };
+
+    checkExpiry();
+    const interval = setInterval(checkExpiry, 5000);
+    return () => clearInterval(interval);
   }, []);
 
   // Save to localStorage on change
@@ -1181,12 +1375,14 @@ export const GymDataProvider: React.FC<{ children: React.ReactNode }> = ({ child
           posTransactions,
           posProducts,
           tenants,
+          transactions,
+          weightliftingSessions,
         })
       );
     } catch (e) {
       // Storage quota or SSR ignore
     }
-  }, [members, checkIns, ptPackages, ptSessionLogs, gymClasses, classBookings, posTransactions, posProducts, tenants]);
+  }, [members, checkIns, ptPackages, ptSessionLogs, gymClasses, classBookings, posTransactions, posProducts, tenants, transactions, weightliftingSessions]);
 
   // Derived stats
   const activeMembersCount = members.filter((m) => m.club_id === currentClub.id && m.status === "active").length;
@@ -1891,6 +2087,199 @@ export const GymDataProvider: React.FC<{ children: React.ReactNode }> = ({ child
   // ==============================================================================
   // CSV EXPORTS
   // ==============================================================================
+  // ==============================================================================
+  // MEMBER TRANSACTIONS & OMNICHANNEL PAYMENTS
+  // ==============================================================================
+  const createTransaction = (data: {
+    memberId: string;
+    memberName?: string;
+    memberPhone?: string;
+    transactionType: TransactionType;
+    title: string;
+    description: string;
+    amount: number;
+    paymentMethod: TransactionPaymentMethod;
+    paymentChannel?: string;
+    details?: any;
+  }): Transaction => {
+    const member = members.find((m) => m.id === data.memberId);
+    const invoiceCode = `INV-FTL-${new Date().toISOString().slice(0, 10).replace(/-/g, "")}-${Math.floor(1000 + Math.random() * 9000)}`;
+    const now = new Date();
+    const expiresAt = new Date(now.getTime() + 60 * 60 * 1000).toISOString(); // 1 HOUR (60 minutes)
+
+    const isOnline = data.paymentMethod === "online";
+    const status: TransactionStatus = isOnline ? "paid" : "pending";
+
+    const newTx: Transaction = {
+      id: `tx-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
+      member_id: data.memberId,
+      member_name: data.memberName || member?.full_name || "Member FTL",
+      member_phone: data.memberPhone || member?.phone || "-",
+      invoice_code: invoiceCode,
+      transaction_type: data.transactionType,
+      title: data.title,
+      description: data.description,
+      amount: data.amount,
+      payment_method: data.paymentMethod,
+      payment_channel: data.paymentChannel || (isOnline ? "midtrans_qris" : "tunai_frontdesk"),
+      status,
+      created_at: now.toISOString(),
+      expires_at: expiresAt,
+      paid_at: isOnline ? now.toISOString() : undefined,
+      confirmed_by: isOnline ? "Midtrans Automated Settlement" : undefined,
+      details: data.details,
+    };
+
+    setTransactions((prev) => [newTx, ...prev]);
+
+    // If online, immediately activate membership or PT sessions for the member!
+    if (isOnline && member) {
+      if (data.transactionType === "pt_package") {
+        const addedSessions = data.details?.sessions_count || 12;
+        updateMember(member.id, {
+          selected_coach_sessions: (member.selected_coach_sessions || 0) + addedSessions,
+          selected_coach_id: data.details?.coach_id || member.selected_coach_id || "coach-dian",
+          selected_coach_name: data.details?.coach_name || member.selected_coach_name || "Coach Dian",
+          status: "active",
+        });
+      } else if (data.transactionType === "membership") {
+        const days = data.details?.package_type === "1_year" ? 365 : data.details?.package_type === "6_months" ? 180 : 30;
+        const currentExp = member.expiry_date ? new Date(member.expiry_date) : new Date();
+        const baseDate = currentExp > new Date() ? currentExp : new Date();
+        const newExp = new Date(baseDate.getTime() + days * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
+
+        updateMember(member.id, {
+          expiry_date: newExp,
+          status: "active",
+          package_type: data.details?.package_type || member.package_type,
+          payment_proof_status: "approved",
+        });
+      }
+    }
+
+    try {
+      if ("BroadcastChannel" in window) {
+        const bc = new BroadcastChannel("ftl_gym_sync_v4");
+        bc.postMessage({ type: "SYNC_TRANSACTIONS", transaction: newTx });
+        bc.close();
+      }
+    } catch (e) {}
+
+    return newTx;
+  };
+
+  const confirmCashTransaction = (
+    invoiceCode: string,
+    staffUserId: string = "user-fd-01"
+  ): { success: boolean; message: string; transaction?: Transaction } => {
+    const tx = transactions.find((t) => t.invoice_code.toUpperCase() === invoiceCode.trim().toUpperCase());
+    if (!tx) {
+      return { success: false, message: `Invoice ${invoiceCode} tidak ditemukan.` };
+    }
+
+    if (tx.status === "paid") {
+      return { success: true, message: `Invoice ${invoiceCode} sudah lunas sebelumnya.`, transaction: tx };
+    }
+
+    const now = new Date();
+    if (now > new Date(tx.expires_at)) {
+      setTransactions((prev) => prev.map((t) => (t.id === tx.id ? { ...t, status: "expired" as const } : t)));
+      return { success: false, message: "Waktu pembayaran tunai 1 jam telah habis. Invoice ini sudah expired/hangus." };
+    }
+
+    const updatedTx: Transaction = {
+      ...tx,
+      status: "paid",
+      paid_at: now.toISOString(),
+      confirmed_by: `Staf Front Desk (${staffUserId})`,
+    };
+
+    setTransactions((prev) => prev.map((t) => (t.id === tx.id ? updatedTx : t)));
+
+    // Activate package or PT sessions for the member!
+    const member = members.find((m) => m.id === tx.member_id);
+    if (member) {
+      if (tx.transaction_type === "pt_package") {
+        const addedSessions = tx.details?.sessions_count || 12;
+        updateMember(member.id, {
+          selected_coach_sessions: (member.selected_coach_sessions || 0) + addedSessions,
+          selected_coach_id: tx.details?.coach_id || member.selected_coach_id || "coach-dian",
+          selected_coach_name: tx.details?.coach_name || member.selected_coach_name || "Coach Dian",
+          status: "active",
+        });
+      } else if (tx.transaction_type === "membership") {
+        const days = tx.details?.package_type === "1_year" ? 365 : tx.details?.package_type === "6_months" ? 180 : 30;
+        const currentExp = member.expiry_date ? new Date(member.expiry_date) : new Date();
+        const baseDate = currentExp > new Date() ? currentExp : new Date();
+        const newExp = new Date(baseDate.getTime() + days * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
+
+        updateMember(member.id, {
+          expiry_date: newExp,
+          status: "active",
+          package_type: tx.details?.package_type || member.package_type,
+          payment_proof_status: "approved",
+        });
+      }
+    }
+
+    soundManager.playSuccessBeep();
+
+    try {
+      if ("BroadcastChannel" in window) {
+        const bc = new BroadcastChannel("ftl_gym_sync_v4");
+        bc.postMessage({ type: "SYNC_TRANSACTIONS", transaction: updatedTx });
+        bc.close();
+      }
+    } catch (e) {}
+
+    return {
+      success: true,
+      message: `Pembayaran tunai ${formatRupiah(tx.amount)} berhasil dikonfirmasi kasir! Paket member aktif otomatis.`,
+      transaction: updatedTx,
+    };
+  };
+
+  const bookWeightliftingSession = (
+    sessionId: string,
+    memberId: string
+  ): { success: boolean; message: string } => {
+    const session = weightliftingSessions.find((s) => s.id === sessionId);
+    if (!session) {
+      return { success: false, message: "Sesi latihan beban tidak ditemukan." };
+    }
+
+    const member = members.find((m) => m.id === memberId);
+    if (!member) {
+      return { success: false, message: "Data member tidak ditemukan. Silakan login terlebih dahulu." };
+    }
+
+    if (member.status !== "active") {
+      return { success: false, message: "Status keanggotaan Anda belum aktif. Silakan lakukan aktivasi terlebih dahulu." };
+    }
+
+    if (session.booked_member_ids?.includes(memberId)) {
+      return { success: false, message: "Anda sudah mengamankan slot di sesi angkat beban ini." };
+    }
+
+    if (session.booked_count >= session.capacity_limit) {
+      return { success: false, message: "Slot sesi angkat beban ini sudah penuh." };
+    }
+
+    const updatedSession: WeightliftingSession = {
+      ...session,
+      booked_count: session.booked_count + 1,
+      booked_member_ids: [...(session.booked_member_ids || []), memberId],
+    };
+
+    setWeightliftingSessions((prev) => prev.map((s) => (s.id === sessionId ? updatedSession : s)));
+
+    soundManager.playSuccessBeep();
+    return {
+      success: true,
+      message: `Berhasil booking sesi ${session.name}! Slot latihan Anda telah terkonfirmasi.`,
+    };
+  };
+
   const exportMembersCSV = () => {
     const rows = members
       .filter((m) => m.club_id === currentClub.id)
@@ -1955,6 +2344,8 @@ export const GymDataProvider: React.FC<{ children: React.ReactNode }> = ({ child
         posTransactions,
         hourlyTraffic,
         coaches,
+        transactions,
+        weightliftingSessions,
         activeMembersCount,
         monthlyRevenue,
         todayCheckinsCount,
@@ -1972,6 +2363,9 @@ export const GymDataProvider: React.FC<{ children: React.ReactNode }> = ({ child
         loginCustomer,
         bookCoachForMember,
         updateMember,
+        createTransaction,
+        confirmCashTransaction,
+        bookWeightliftingSession,
         bookGymClass,
         checkInClassBooking,
         cancelClassBooking,
