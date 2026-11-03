@@ -44,13 +44,13 @@ export const OmnichannelPaymentModal: React.FC<OmnichannelPaymentModalProps> = (
   // Mode: "pt_package" or "membership"
   const [itemType, setItemType] = useState<"pt_package" | "membership">(initialItemType);
 
-  // PT Package Options (Tarif Sesi PT: Star dari Rp 300.000 - Rp 400.000 / sesi)
+  // PT Package Options (Tarif Sesi PT: Star dari Rp 25.000 - Rp 30.000 / sesi)
   const [selectedCoachId, setSelectedCoachId] = useState<string>(member.selected_coach_id || "coach-kevin");
   const [selectedPtSessions, setSelectedPtSessions] = useState<number>(12);
   const currentCoach = coaches.find((c) => c.id === selectedCoachId) || coaches[0];
   const ptPrice = selectedPtSessions === 12
-    ? (currentCoach?.pt_rate_12 || 3600000)
-    : (currentCoach?.pt_rate_24 || 6800000);
+    ? (currentCoach?.pt_rate_12 || 300000)
+    : (currentCoach?.pt_rate_24 || 580000);
 
   // Membership Renewal Options
   const [selectedMembershipPlan, setSelectedMembershipPlan] = useState<"1_month" | "6_months" | "1_year">("1_month");
@@ -234,10 +234,10 @@ export const OmnichannelPaymentModal: React.FC<OmnichannelPaymentModalProps> = (
                 <div className="p-3 rounded-xl bg-gradient-to-r from-amber-500/20 via-zinc-900 to-zinc-900 border border-amber-500/50">
                   <div className="text-[11px] font-bold text-amber-300">TARIF RESMI PERSONAL TRAINER:</div>
                   <div className="text-base sm:text-lg font-black text-white mt-0.5">
-                    Star dari <span className="text-amber-400">Rp 300.000 – Rp 400.000</span> / Sesi
+                    Star dari <span className="text-amber-400">Rp 25.000 – Rp 30.000</span> / Sesi
                   </div>
                   <div className="text-[10px] text-zinc-400 mt-0.5">
-                    Harga disesuaikan dengan sertifikasi Coach. {currentCoach.name}: <span className="text-amber-300 font-bold">{formatRupiah(currentCoach.rate_per_session || 300000)} / sesi</span>.
+                    Harga disesuaikan dengan sertifikasi Coach. {currentCoach.name}: <span className="text-amber-300 font-bold">{formatRupiah(currentCoach.rate_per_session || 25000)} / sesi</span>.
                   </div>
                 </div>
 
@@ -267,7 +267,7 @@ export const OmnichannelPaymentModal: React.FC<OmnichannelPaymentModalProps> = (
                           <div className="min-w-0 flex-1">
                             <div className="text-xs font-bold text-white truncate">{c.nickname}</div>
                             <div className="text-[10px] text-amber-400 font-mono font-bold">
-                              Rp {((c.rate_per_session || 300000) / 1000).toFixed(0)}rb/sesi
+                              Rp {((c.rate_per_session || 25000) / 1000).toFixed(0)}rb/sesi
                             </div>
                           </div>
                         </div>
@@ -289,7 +289,7 @@ export const OmnichannelPaymentModal: React.FC<OmnichannelPaymentModalProps> = (
                   >
                     <div className="font-black">12 Sesi ({formatRupiah(currentCoach.pt_rate_12)})</div>
                     <div className="text-[9px] opacity-80">
-                      @ {formatRupiah(currentCoach.rate_per_session || 300000)}/sesi
+                      @ {formatRupiah(currentCoach.rate_per_session || 25000)}/sesi
                     </div>
                   </button>
                   <button

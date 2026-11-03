@@ -853,7 +853,7 @@ export default function CustomerPortalPage() {
                           
                           <div className="flex items-center justify-between mt-1 pt-0.5">
                             <span className="text-[10px] text-neon font-black font-mono">
-                              Rp {((c.rate_per_session || 300000) / 1000).toFixed(0)}rb<span className="text-[9px] font-normal text-zinc-400">/sesi</span>
+                              Rp {((c.rate_per_session || 25000) / 1000).toFixed(0)}rb<span className="text-[9px] font-normal text-zinc-400">/sesi</span>
                             </span>
                             {c.id === "coach-dian" && (
                               <span className="text-[9px] bg-neon/20 text-neon px-1.5 py-0.2 rounded font-bold uppercase">
@@ -873,7 +873,7 @@ export default function CustomerPortalPage() {
                     <div className="text-xs font-bold text-white flex items-center gap-2">
                       <span>Pilihan Paket Sesi dengan {currentSelectedCoach.name}:</span>
                       <span className="text-[10px] text-amber-400 font-mono font-bold">
-                        ({formatRupiah(currentSelectedCoach.rate_per_session || 300000)} / sesi)
+                        ({formatRupiah(currentSelectedCoach.rate_per_session || 25000)} / sesi)
                       </span>
                     </div>
                     <div className="text-[11px] text-zinc-400 mt-0.5">{currentSelectedCoach.experience}</div>
@@ -891,7 +891,7 @@ export default function CustomerPortalPage() {
                     >
                       <div className="font-black">12 Sesi ({formatRupiah(currentSelectedCoach.pt_rate_12)})</div>
                       <div className={`text-[10px] ${ptSessionsCount === 12 ? "text-gym-base font-semibold" : "text-zinc-400"}`}>
-                        @ {formatRupiah(currentSelectedCoach.rate_per_session || 300000)} / sesi
+                        @ {formatRupiah(currentSelectedCoach.rate_per_session || 25000)} / sesi
                       </div>
                     </button>
                     <button

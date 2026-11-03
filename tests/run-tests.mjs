@@ -421,8 +421,8 @@ console.log("\n--- TEST 8: Online Membership Registration & Coach Selection Engi
 const coachDian = {
   id: "coach-dian",
   name: "Coach Dian Permata, CSCS",
-  pt_rate_12: 2200000,
-  pt_rate_24: 4000000,
+  pt_rate_12: 360000,
+  pt_rate_24: 680000,
 };
 
 function processOnlineRegistration({ fullName, phone, email, packageType, coachId, coachSessions }) {
@@ -459,7 +459,7 @@ const regWithCoachDian = processOnlineRegistration({
 });
 
 assert.strictEqual(regWithCoachDian.success, true);
-assert.strictEqual(regWithCoachDian.totalAmount, 3400000); // 1.200.000 + 2.200.000
+assert.strictEqual(regWithCoachDian.totalAmount, 1560000); // 1.200.000 + 360.000
 assert.strictEqual(regWithCoachDian.hasCoach, true);
 assert.strictEqual(regWithCoachDian.coachName, "Coach Dian Permata, CSCS");
 console.log("✓ TEST 8 PASSED: Online registration calculates membership package + Coach Dian add-on accurately.");

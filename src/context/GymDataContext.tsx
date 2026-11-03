@@ -73,9 +73,9 @@ export const SEED_COACHES: Coach[] = [
     photo_url: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=400&auto=format&fit=crop&q=80",
     bio: "Certified Strength & Conditioning Specialist. Fokus pada pembentukan massa otot ideal, perbaikan postur, dan program diet nutrisi terstruktur.",
     available_days: "Senin - Sabtu (07:00 - 21:00 WIB)",
-    rate_per_session: 400000,
-    pt_rate_12: 4800000,
-    pt_rate_24: 9000000,
+    rate_per_session: 30000,
+    pt_rate_12: 360000,
+    pt_rate_24: 680000,
   },
   {
     id: "coach-denny",
@@ -87,9 +87,9 @@ export const SEED_COACHES: Coach[] = [
     photo_url: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=400&auto=format&fit=crop&q=80",
     bio: "Spesialis program angkat beban terukur (Bench, Squat, Deadlift) serta fat-loss conditioning intensitas tinggi.",
     available_days: "Senin - Jumat (06:00 - 20:00 WIB)",
-    rate_per_session: 350000,
-    pt_rate_12: 4200000,
-    pt_rate_24: 7900000,
+    rate_per_session: 28000,
+    pt_rate_12: 336000,
+    pt_rate_24: 640000,
   },
   {
     id: "coach-maya",
@@ -101,9 +101,9 @@ export const SEED_COACHES: Coach[] = [
     photo_url: "https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=400&auto=format&fit=crop&q=80",
     bio: "Spesialis program angkat beban terarah, teknik squat/deadlift yang aman, perbaikan postur tubuh, dan body shaping atletis.",
     available_days: "Selasa - Minggu (08:00 - 18:00 WIB)",
-    rate_per_session: 325000,
-    pt_rate_12: 3900000,
-    pt_rate_24: 7400000,
+    rate_per_session: 27000,
+    pt_rate_12: 324000,
+    pt_rate_24: 620000,
   },
   {
     id: "coach-kevin",
@@ -115,9 +115,9 @@ export const SEED_COACHES: Coach[] = [
     photo_url: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&auto=format&fit=crop&q=80",
     bio: "Program latihan kilat bagi Anda yang sibuk. Bakar kalori maksimal dalam 45 menit sesi latihan.",
     available_days: "Setiap Hari (06:00 - 22:00 WIB)",
-    rate_per_session: 300000,
-    pt_rate_12: 3600000,
-    pt_rate_24: 6800000,
+    rate_per_session: 25000,
+    pt_rate_12: 300000,
+    pt_rate_24: 580000,
   },
 ];
 
@@ -1394,7 +1394,7 @@ export const GymDataProvider: React.FC<{ children: React.ReactNode }> = ({ child
   
   // Monthly Revenue = Akumulasi Biaya Membership Aktif + Paket Personal Trainer
   const membershipRev = activeMembers.reduce((sum, m) => sum + (m.package_price || 0), 0);
-  const ptRev = ptPackages.reduce((sum, p) => sum + (p.price || (p.total_sessions * 300000)), 0);
+  const ptRev = ptPackages.reduce((sum, p) => sum + (p.price || (p.total_sessions * 25000)), 0);
   const monthlyRevenue = membershipRev + ptRev;
 
   // Check-ins today

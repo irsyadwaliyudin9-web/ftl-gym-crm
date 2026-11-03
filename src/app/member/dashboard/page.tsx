@@ -683,7 +683,7 @@ export default function MemberDashboardPage() {
                     </Badge>
                   </div>
                   <p className="text-xs text-zinc-400 mt-0.5">
-                    Tarif sesi coach mulai dari <strong>Rp 300.000 – Rp 400.000 / sesi</strong>. Dapatkan koreksi teknik squat, bench, deadlift & nutrisi.
+                    Tarif sesi coach mulai dari <strong>Rp 25.000 – Rp 30.000 / sesi</strong>. Dapatkan koreksi teknik squat, bench, deadlift & nutrisi.
                   </p>
                 </div>
               </div>
@@ -692,7 +692,7 @@ export default function MemberDashboardPage() {
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
                 {coaches.map((c) => {
                   const isCurrent = c.id === liveMember.selected_coach_id;
-                  const ratePerSession = c.rate_per_session || 300000;
+                  const ratePerSession = c.rate_per_session || 25000;
 
                   return (
                     <div
