@@ -118,7 +118,7 @@ export default function CustomerPortalPage() {
       period: "1 Bulan",
       popular: false,
       benefits: [
-        "Akses bebas 24 Jam ke seluruh alat FTL Gym",
+        "Akses bebas 24 Jam ke seluruh alat One O One Gym",
         "Lengkap Barbell, Dumbbell, Power Rack & Mesin Beban",
         "Akses loker harian & shower room",
         "1x Free Body Composition Check (InBody Assessment)",
@@ -136,7 +136,7 @@ export default function CustomerPortalPage() {
         "Semua keuntungan Paket 1 Bulan",
         "Hemat Rp300.000 dibanding bulanan",
         "Free 1x Sesi PT Assessment Angkat Beban",
-        "Gratis FTL Official Shaker Bottle",
+        "Gratis 101 Official Shaker Bottle",
         "Bisa cuti/freeze membership 1x (maks 14 hari)",
       ],
     },
@@ -152,7 +152,7 @@ export default function CustomerPortalPage() {
         "Akses VIP 365 Hari ke seluruh area gym & beban",
         "Tarif paling hemat (hanya Rp183k/bln)",
         "Free 2x Sesi Personal Trainer Angkat Beban",
-        "Gratis Exclusive FTL Gym Bag & Merchandise",
+        "Gratis Exclusive 101 Gym Bag & Merchandise",
         "Bisa cuti/freeze membership 2x (total 30 hari)",
       ],
     },
@@ -264,7 +264,7 @@ export default function CustomerPortalPage() {
           <div className="space-y-3 max-w-2xl">
             <div className="flex items-center gap-2">
               <Badge variant="neon" size="md" className="font-black tracking-wider uppercase">
-                ⚡ FTL GYM OFFICIAL MEMBER PORTAL
+                ⚡ ONE O ONE GYM OFFICIAL MEMBER PORTAL
               </Badge>
               {displayMember && (
                 <Badge variant={isPending ? "warning" : "success"} size="sm" className="font-bold">
@@ -286,7 +286,7 @@ export default function CustomerPortalPage() {
             <p className="text-xs sm:text-sm text-zinc-300 leading-relaxed">
               {displayMember ? (
                 <>
-                  Kelola kartu digital FTL Gym Anda, pantau jadwal latihan bersama{" "}
+                  Kelola kartu digital One O One Gym Anda, pantau sesi latihan bersama{" "}
                   <strong className="text-white">{displayMember.selected_coach_name || "Coach Dian"}</strong>, serta kuota sesi latihan angkat beban Anda.
                 </>
               ) : (
@@ -389,7 +389,7 @@ export default function CustomerPortalPage() {
         <div className="max-w-2xl mx-auto space-y-6 animate-in fade-in">
           <div className="text-center space-y-2">
             <Badge variant={isPending ? "warning" : "success"} size="md" className="font-black tracking-wide">
-              {isPending ? "⏳ MENUNGGU APPROVAL ADMIN" : "✓ KARTU MEMBER FTL GYM AKTIF"}
+              {isPending ? "⏳ MENUNGGU APPROVAL ADMIN" : "✓ KARTU MEMBER ONE O ONE GYM AKTIF"}
             </Badge>
             <h2 className="text-2xl sm:text-3xl font-black text-white">
               Kartu Member Digital Anda
@@ -420,23 +420,23 @@ export default function CustomerPortalPage() {
 
           {/* Pending Approval WhatsApp Instructions Banner */}
           {isPending && displayMember && (
-            <div className="p-5 rounded-3xl bg-amber-950/70 border-2 border-amber-600/70 text-amber-200 text-xs space-y-4 shadow-xl">
+            <div className="p-5 rounded-3xl bg-orange-950/70 border-2 border-neon/70 text-orange-200 text-xs space-y-4 shadow-xl">
               <div className="flex items-start gap-3">
-                <Hourglass className="w-6 h-6 text-amber-400 shrink-0 mt-0.5 animate-pulse" />
+                <Hourglass className="w-6 h-6 text-neon shrink-0 mt-0.5 animate-pulse" />
                 <div className="space-y-1">
                   <div className="font-black text-white text-sm">
                     Menunggu Konfirmasi Pembayaran oleh Staf Admin
                   </div>
                   <p className="text-[12px] text-zinc-300 leading-relaxed">
                     Pendaftaran Anda telah tercatat dengan Kode <strong className="text-neon">{displayMember.member_code}</strong>.
-                    Silakan transfer pembayaran ke rekening FTL Gym lalu kirimkan bukti transfer melalui WhatsApp Admin di bawah ini.
+                    Silakan transfer pembayaran ke rekening One O One Gym lalu kirimkan bukti transfer melalui WhatsApp Admin di bawah ini.
                   </p>
                 </div>
               </div>
 
-              <div className="p-3.5 rounded-2xl bg-black/70 border border-amber-800/80 text-[12px] space-y-1.5">
-                <div className="text-zinc-400">Rekening Transfer Resmi FTL Gym:</div>
-                <div className="font-mono font-bold text-white text-sm">BCA: 8830-1928-11 (a/n PT FTL Gym Indonesia)</div>
+              <div className="p-3.5 rounded-2xl bg-black/70 border border-orange-800/80 text-[12px] space-y-1.5">
+                <div className="text-zinc-400">Rekening Transfer Resmi One O One Gym:</div>
+                <div className="font-mono font-bold text-white text-sm">BCA: 8830-1928-11 (a/n PT One O One Gym Indonesia)</div>
                 <div className="text-zinc-300">
                   Total Biaya: <strong className="text-neon font-black text-sm">{formatRupiah(displayMember.package_price)}</strong>
                 </div>
@@ -444,7 +444,7 @@ export default function CustomerPortalPage() {
 
               <a
                 href={`https://wa.me/62895601800302?text=${encodeURIComponent(
-                  `Halo Admin FTL Gym, saya sudah mendaftar membership online:\n\n` +
+                  `Halo Admin One O One Gym, saya sudah mendaftar membership online:\n\n` +
                   `• Kode Member: ${displayMember.member_code}\n` +
                   `• Nama: ${displayMember.full_name}\n` +
                   `• No. HP: ${displayMember.phone}\n` +
@@ -497,7 +497,7 @@ export default function CustomerPortalPage() {
               <span>Jadwal & Kuota Sesi Personal Trainer</span>
             </h2>
             <p className="text-xs sm:text-sm text-zinc-400 mt-1">
-              Pantau kuota sesi latihan bersama coach Anda dan atur jadwal latihan langsung via WhatsApp resmi FTL Gym.
+              Pantau kuota sesi latihan bersama coach Anda dan atur jadwal latihan langsung via WhatsApp resmi One O One Gym.
             </p>
           </div>
 
@@ -534,8 +534,8 @@ export default function CustomerPortalPage() {
                   <Flame className="w-5 h-5" />
                 </div>
                 <div>
-                  <div className="text-sm font-black text-white">Sudah Punya Akun Member FTL Gym?</div>
-                  <div className="text-xs text-zinc-400">Masuk untuk melihat sisa kuota sesi PT dan jadwal pelatih pribadi Anda.</div>
+                  <div className="text-sm font-black text-white">Sudah Punya Akun Member One O One Gym?</div>
+                  <div className="text-xs text-zinc-400">Masuk untuk melihat sisa kuota sesi PT dan pelatih pribadi Anda.</div>
                 </div>
               </div>
               <Button variant="neon" size="sm" onClick={() => setActiveTab("login")} className="text-xs font-black">
@@ -593,11 +593,11 @@ export default function CustomerPortalPage() {
               {/* Booking WhatsApp Action */}
               <a
                 href={`https://wa.me/62895601800302?text=${encodeURIComponent(
-                  `Halo Coach ${assignedCoach.nickname} & Admin FTL Gym, saya member ${displayMember?.full_name || ""} (Kode: ${displayMember?.member_code || ""}). Saya ingin membuat janji temu sesi latihan Personal Trainer.`
+                  `Halo Coach ${assignedCoach.nickname} & Admin One O One Gym, saya member ${displayMember?.full_name || ""} (Kode: ${displayMember?.member_code || ""}). Saya ingin membuat janji temu sesi latihan Personal Trainer.`
                 )}`}
                 target="_blank"
                 rel="noreferrer"
-                className="w-full py-3 px-5 rounded-2xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-black font-black text-xs sm:text-sm flex items-center justify-center gap-2 shadow-lg transition-all"
+                className="w-full py-3 px-5 rounded-2xl bg-gradient-to-r from-neon to-orange-600 hover:from-orange-500 hover:to-orange-600 text-black font-black text-xs sm:text-sm flex items-center justify-center gap-2 shadow-lg transition-all"
               >
                 <MessageCircle className="w-4 h-4" />
                 <span>Buat Janji Latihan via WhatsApp ({assignedCoach.nickname})</span>
@@ -643,7 +643,7 @@ export default function CustomerPortalPage() {
           <div className="pt-4 space-y-4">
             <h3 className="text-lg font-black text-white flex items-center gap-2">
               <Users className="w-5 h-5 text-neon" />
-              <span>Tim Personal Trainer Bersertifikat FTL Gym</span>
+              <span>Tim Personal Trainer Bersertifikat One O One Gym</span>
             </h3>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
               {coaches.map((c) => (
@@ -723,7 +723,7 @@ export default function CustomerPortalPage() {
               <span>Langkah 1: Pilih Paket Membership Gym & Angkat Beban</span>
             </h2>
             <p className="text-xs sm:text-sm text-zinc-400 mt-1">
-              Pilih durasi akses ke seluruh area angkat beban dan fasilitas gym FTL Gym.
+              Pilih durasi akses ke seluruh area angkat beban dan fasilitas One O One Gym.
             </p>
           </div>
 
@@ -921,7 +921,7 @@ export default function CustomerPortalPage() {
                 <span>Langkah 3: Lengkapi Data Diri Calon Member</span>
               </h3>
               <p className="text-xs text-zinc-400 mt-1">
-                Data ini digunakan untuk penerbitan Kartu Member FTL Gym dan QR Code resmi Anda.
+                Data ini digunakan untuk penerbitan Kartu Member One O One Gym dan QR Code resmi Anda.
               </p>
             </div>
 
@@ -1018,11 +1018,11 @@ export default function CustomerPortalPage() {
         <div className="max-w-md mx-auto space-y-6 animate-in fade-in">
           <div className="text-center space-y-2">
             <div className="w-12 h-12 rounded-2xl bg-neon text-gym-base flex items-center justify-center font-black mx-auto shadow-neon text-lg">
-              FTL
+              101
             </div>
-            <h2 className="text-2xl font-black text-white">Masuk ke Akun Member FTL Gym</h2>
+            <h2 className="text-2xl font-black text-white">Masuk ke Akun Member One O One Gym</h2>
             <p className="text-xs text-zinc-400">
-              Masukkan Nomor WhatsApp, Email, atau Kode Member (FTL-...) yang sudah Anda daftarkan sebelumnya.
+              Masukkan Nomor WhatsApp, Email, atau Kode Member (101-...) yang sudah Anda daftarkan sebelumnya.
             </p>
           </div>
 
@@ -1051,7 +1051,7 @@ export default function CustomerPortalPage() {
                   <input
                     type="text"
                     required
-                    placeholder="Contoh: 081234567890 atau FTL-0810"
+                    placeholder="Contoh: 081234567890 atau 101-0810"
                     value={loginIdentifier}
                     onChange={(e) => setLoginIdentifier(e.target.value)}
                     className="w-full bg-gym-elevated border border-zinc-700 rounded-xl pl-10 pr-3.5 py-2.5 text-xs text-white placeholder-zinc-500 focus:outline-none focus:border-neon"

@@ -25,7 +25,7 @@ const OFFICIAL_STAFF_USER: UserProfile = {
   id: "user-ftl-staff-official",
   tenant_id: "tenant-ftl",
   club_id: "club-ftl-01",
-  full_name: "Staf Resmi FTL Gym",
+  full_name: "Staf Resmi One O One Gym",
   email: "ftlgym@gmail.com",
   phone: "+62895601800302",
   role: "club_manager",
@@ -92,7 +92,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const cleanEmail = email.trim().toLowerCase();
     const cleanPass = pass.trim();
 
-    if (cleanEmail === "ftlgym@gmail.com" && cleanPass === "pataruman12345") {
+    if ((cleanEmail === "ftlgym@gmail.com" || cleanEmail === "oneoonegym@gmail.com" || cleanEmail === "101gym@gmail.com") && cleanPass === "pataruman12345") {
       setIsStaffAuthenticated(true);
       setIsAuthenticated(true);
       setCurrentUser(OFFICIAL_STAFF_USER);
@@ -100,12 +100,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       try {
         localStorage.setItem("ftl_staff_session", "authenticated");
       } catch (e) {}
-      return { success: true, message: "Login berhasil! Selamat datang di Dashboard Staf FTL Gym." };
+      return { success: true, message: "Login berhasil! Selamat datang di Dashboard Staf One O One Gym." };
     }
 
     return {
       success: false,
-      message: "Email atau kata sandi salah. Hanya staf resmi FTL Gym (ftlgym@gmail.com) yang diizinkan masuk.",
+      message: "Email atau kata sandi salah. Hanya staf resmi One O One Gym yang diizinkan masuk.",
     };
   };
 
@@ -181,7 +181,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
       const isPending = matched.status === "pending_approval" || matched.payment_proof_status === "pending";
       const welcomeMsg = isPending
-        ? `Selamat datang kembali, ${matched.full_name}! Akun Anda sedang menunggu persetujuan (approval) staf admin FTL Gym.`
+        ? `Selamat datang kembali, ${matched.full_name}! Akun Anda sedang menunggu persetujuan (approval) staf admin One O One Gym.`
         : `Selamat datang kembali, ${matched.full_name}!`;
 
       return { success: true, member: matched, message: welcomeMsg };
@@ -189,7 +189,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     return {
       success: false,
-      message: "Nomor WhatsApp atau Email belum terdaftar di FTL Gym. Silakan klik 'Daftar Member Baru' di atas untuk membuat akun.",
+      message: "Nomor WhatsApp atau Email belum terdaftar di One O One Gym. Silakan klik 'Daftar Member Baru' di atas untuk membuat akun.",
     };
   };
 
@@ -207,8 +207,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       id: "mem-" + Date.now().toString(36),
       tenant_id: "tenant-ironforge",
       club_id: "club-jkt-01",
-      club_name: "FTL Gym Jakarta Pusat (Pusat)",
-      member_code: "FTL-" + Math.floor(1000 + Math.random() * 9000),
+      club_name: "One O One Gym Jakarta Pusat (Pusat)",
+      member_code: "101-" + Math.floor(1000 + Math.random() * 9000),
       full_name: cleanName,
       phone: cleanPhone,
       email: cleanEmail,
@@ -218,7 +218,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       package_price: 250000,
       start_date: new Date().toISOString().slice(0, 10),
       expiry_date: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10),
-      qr_code_data: "FTL:" + cleanName.toUpperCase().replace(/\s+/g, "-") + ":" + Date.now(),
+      qr_code_data: "101:" + cleanName.toUpperCase().replace(/\s+/g, "-") + ":" + Date.now(),
       selected_coach_id: undefined,
       selected_coach_name: undefined,
       selected_coach_sessions: 0,
@@ -252,10 +252,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         member_id: newMember.id,
         member_name: newMember.full_name,
         member_phone: newMember.phone,
-        invoice_code: `INV-REG-${Date.now().toString().slice(-6)}`,
+        invoice_code: `INV-101-${Date.now().toString().slice(-6)}`,
         transaction_type: "membership",
-        title: "Pendaftaran Member Baru (Menunggu Approval)",
-        description: `Pendaftaran baru ${newMember.full_name}. Menunggu verifikasi & persetujuan staf front desk.`,
+        title: "Pendaftaran Member Baru One O One Gym (Menunggu Approval)",
+        description: `Pendaftaran baru ${newMember.full_name}. Menunggu verifikasi & persetujuan staf front desk One O One Gym.`,
         amount: 250000,
         payment_method: "tunai",
         payment_channel: "frontdesk_cash",
@@ -283,7 +283,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return {
       success: true,
       member: newMember,
-      message: `Pendaftaran berhasil! Akun Anda sedang dalam antrean verifikasi & persetujuan (approval) staf admin FTL Gym.`,
+      message: `Pendaftaran berhasil! Akun Anda sedang dalam antrean verifikasi & persetujuan (approval) staf admin One O One Gym.`,
     };
   };
 

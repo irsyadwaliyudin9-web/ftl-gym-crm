@@ -71,20 +71,20 @@ export const GymMemberCard: React.FC<GymMemberCardProps> = ({ member, onRefreshS
           <div className="flex items-center gap-3">
             <div
               className={`w-11 h-11 rounded-2xl flex items-center justify-center font-black text-sm shadow-md ${
-                isPending ? "bg-amber-400 text-black" : "bg-neon text-gym-base shadow-neon-sm"
+                isPending ? "bg-amber-400 text-black" : "bg-neon text-black shadow-neon-sm"
               }`}
             >
-              FTL
+              101
             </div>
             <div>
               <div className="font-black text-white text-base tracking-wider flex items-center gap-2">
-                <span>FTL GYM</span>
+                <span>ONE O ONE GYM</span>
                 <span className="text-[10px] px-2 py-0.5 rounded-full font-bold uppercase tracking-wider bg-zinc-800 text-zinc-300 border border-zinc-700">
                   OFFICIAL PASS
                 </span>
               </div>
               <div className="text-[11px] font-bold text-zinc-400 tracking-wider">
-                FASTER THAN LIGHT • JAKARTA
+                ONE O ONE FITNESS CLUB • JAKARTA
               </div>
             </div>
           </div>
@@ -230,7 +230,7 @@ export const GymMemberCard: React.FC<GymMemberCardProps> = ({ member, onRefreshS
 
         {/* Card Footer */}
         <div className="relative z-10 pt-5 mt-5 border-t border-zinc-800/80 flex flex-col sm:flex-row items-center justify-between text-[11px] text-zinc-500 gap-2">
-          <div>PT FTL GYM INDONESIA • CS / ADMIN WA: 0895-6018-00302</div>
+          <div>PT ONE O ONE GYM INDONESIA • CS / ADMIN WA: 0895-6018-00302</div>
           <div className="font-semibold text-zinc-400">RESMI & BERLAKU DI SELURUH CABANG</div>
         </div>
       </div>

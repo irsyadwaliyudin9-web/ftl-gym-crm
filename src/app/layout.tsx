@@ -16,10 +16,10 @@ export const viewport: Viewport = {
 };
 
 export const metadata: Metadata = {
-  title: "FTL Gym (Faster Than Light) — CRM & Portal Member Resmi",
+  title: "One O One Gym (101 Gym) — CRM & Portal Member Resmi",
   description:
-    "Sistem Manajemen Gym Terpadu FTL Gym: Portal Pendaftaran Member Online, Presensi Front Desk QR Code, Sesi Coach & Personal Trainer, dan Jadwal Kelas Studio.",
-  keywords: "ftl gym, fitness software indonesia, gym crm jakarta, check in qr gym, personal trainer ftl",
+    "Sistem Manajemen Gym Terpadu One O One Gym (101 Gym): Portal Pendaftaran Member Online, Presensi Front Desk QR Code, dan Sesi Personal Trainer.",
+  keywords: "one o one gym, 101 gym, fitness software indonesia, gym crm jakarta, check in qr gym, personal trainer 101",
   manifest: "/manifest.json",
   icons: {
     icon: "/icon.svg",
@@ -28,7 +28,7 @@ export const metadata: Metadata = {
   appleWebApp: {
     capable: true,
     statusBarStyle: "black-translucent",
-    title: "FTL Gym",
+    title: "One O One Gym",
   },
 };
 
@@ -43,7 +43,7 @@ export default function RootLayout({
         <meta name="mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-        <meta name="apple-mobile-web-app-title" content="FTL Gym" />
+        <meta name="apple-mobile-web-app-title" content="One O One Gym" />
       </head>
       <body className="bg-gym-base text-zinc-100 min-h-screen antialiased selection:bg-neon selection:text-black">
         <AuthProvider>

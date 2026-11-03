@@ -601,7 +601,7 @@ export default function FrontDeskScannerPage() {
                         <div className="pt-3 flex flex-wrap items-center gap-2">
                           <a
                             href={`https://wa.me/62895601800302?text=${encodeURIComponent(
-                              `Halo Admin FTL Gym, member ${lastResult.member.full_name} (${lastResult.member.member_code}) berada di Front Desk namun pendaftarannya masih pending approval. Mohon segera dicek.`
+                              `Halo Admin One O One Gym, member ${lastResult.member.full_name} (${lastResult.member.member_code}) berada di Front Desk namun pendaftarannya masih pending approval. Mohon segera dicek.`
                             )}`}
                             target="_blank"
                             rel="noopener noreferrer"

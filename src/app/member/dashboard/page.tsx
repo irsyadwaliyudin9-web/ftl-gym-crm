@@ -14,7 +14,6 @@ import {
   QrCode,
   CreditCard,
   Flame,
-  Calendar,
   History,
   Clock,
   CheckCircle2,
@@ -41,8 +40,6 @@ export default function MemberDashboardPage() {
   const {
     members,
     transactions,
-    weightliftingSessions,
-    bookWeightliftingSession,
     coaches,
     checkIns,
   } = useGymData();
@@ -50,16 +47,15 @@ export default function MemberDashboardPage() {
   // Find live member from context to reflect instant updates
   const liveMember = members.find((m) => m.id === currentMember?.id) || currentMember;
 
-  // Active Main Tab: "overview" | "membership" | "pt" | "schedule" | "transactions"
-  const [activeTab, setActiveTab] = useState<"overview" | "membership" | "pt" | "schedule" | "transactions">("overview");
+  // Active Main Tab: "overview" | "membership" | "pt" | "transactions"
+  const [activeTab, setActiveTab] = useState<"overview" | "membership" | "pt" | "transactions">("overview");
 
   // Payment Modal State
   const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
   const [paymentItemType, setPaymentItemType] = useState<"pt_package" | "membership">("membership");
   const [preselectedCoachId, setPreselectedCoachId] = useState<string | undefined>(undefined);
 
-  // Booking Feedback State
-  const [bookingNotice, setBookingNotice] = useState<{ success: boolean; message: string } | null>(null);
+  // Feedback State
   const [refreshNotice, setRefreshNotice] = useState<string | null>(null);
 
   // Active Pending Cash Invoice (if any, with 1-hour live countdown)
@@ -104,14 +100,8 @@ export default function MemberDashboardPage() {
   const memberCheckins = checkIns.filter((c) => c.member_id === liveMember.id);
   const memberTransactions = transactions.filter((t) => t.member_id === liveMember.id);
 
-  const handleBookSession = (sessionId: string) => {
-    const res = bookWeightliftingSession(sessionId, liveMember.id);
-    setBookingNotice(res);
-    setTimeout(() => setBookingNotice(null), 4000);
-  };
-
   const handleRefreshStatus = () => {
-    setRefreshNotice("Memeriksa status persetujuan staf...");
+    setRefreshNotice("Memeriksa status persetujuan staf One O One Gym...");
     setTimeout(() => {
       if (liveMember.status === "active") {
         setRefreshNotice("✓ Akun Anda sudah AKTIF dan disetujui staf admin!");
@@ -139,14 +129,14 @@ export default function MemberDashboardPage() {
       {/* 1. INFORMASI PENDAFTARAN & STATUS APPROVAL OLEH STAF ADMIN (PENTING)      */}
       {/* ========================================================================= */}
       {isPendingApproval ? (
-        <section className="bg-gradient-to-r from-amber-950/80 via-zinc-900 to-black border-2 border-amber-500 rounded-3xl p-5 sm:p-6 shadow-2xl relative overflow-hidden space-y-4 animate-in zoom-in-95">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-amber-500/30">
+        <section className="bg-gradient-to-r from-orange-950/80 via-zinc-900 to-black border-2 border-neon rounded-3xl p-5 sm:p-6 shadow-2xl relative overflow-hidden space-y-4 animate-in zoom-in-95">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-neon/30">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-2xl bg-amber-400 text-black flex items-center justify-center font-black shrink-0 animate-pulse">
+              <div className="w-10 h-10 rounded-2xl bg-neon text-black flex items-center justify-center font-black shrink-0 animate-pulse">
                 <Clock className="w-5 h-5" />
               </div>
               <div>
-                <span className="text-[10px] font-black uppercase text-amber-400 tracking-wider bg-amber-500/20 px-2.5 py-0.5 rounded border border-amber-500/40">
+                <span className="text-[10px] font-black uppercase text-neon tracking-wider bg-neon/20 px-2.5 py-0.5 rounded border border-neon/40">
                   STATUS PENDAFTARAN: MENUNGGU VERIFIKASI STAF ADMIN
                 </span>
                 <h1 className="text-lg sm:text-xl font-black text-white mt-1">
@@ -159,7 +149,7 @@ export default function MemberDashboardPage() {
               variant="outline"
               size="sm"
               onClick={handleRefreshStatus}
-              className="border-amber-500/60 text-amber-300 hover:bg-amber-500/20 text-xs font-bold shrink-0 self-start sm:self-auto"
+              className="border-neon/60 text-neon hover:bg-neon/20 text-xs font-bold shrink-0 self-start sm:self-auto"
             >
               <RefreshCw className="w-3.5 h-3.5 mr-1.5" />
               <span>Cek Status Approval</span>
@@ -167,31 +157,31 @@ export default function MemberDashboardPage() {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs text-zinc-300">
-            <div className="p-3.5 rounded-2xl bg-black/60 border border-amber-500/30 space-y-1.5">
-              <div className="text-[10px] uppercase font-bold text-amber-400">Rincian Akun Terdaftar:</div>
+            <div className="p-3.5 rounded-2xl bg-black/60 border border-neon/30 space-y-1.5">
+              <div className="text-[10px] uppercase font-bold text-neon">Rincian Akun One O One Gym:</div>
               <div><strong>Nama Lengkap:</strong> {liveMember.full_name}</div>
               <div><strong>No. WhatsApp:</strong> {liveMember.phone}</div>
               <div><strong>Email:</strong> {liveMember.email || "-"}</div>
-              <div><strong>Nomor ID Antrean:</strong> <span className="font-mono text-amber-300 font-bold">{liveMember.member_code}</span></div>
+              <div><strong>Nomor ID Antrean:</strong> <span className="font-mono text-neon font-bold">{liveMember.member_code}</span></div>
               <div><strong>Paket Pendaftaran:</strong> {liveMember.package_type === "1_year" ? "1 Tahun VIP" : liveMember.package_type === "6_months" ? "6 Bulan VIP" : "1 Bulan VIP Gym"} ({formatRupiah(liveMember.package_price || 250000)})</div>
             </div>
 
-            <div className="p-3.5 rounded-2xl bg-black/60 border border-amber-500/30 space-y-2 flex flex-col justify-between">
+            <div className="p-3.5 rounded-2xl bg-black/60 border border-neon/30 space-y-2 flex flex-col justify-between">
               <div>
-                <div className="text-[10px] uppercase font-bold text-amber-400">Petunjuk Aktivasi Front Desk:</div>
+                <div className="text-[10px] uppercase font-bold text-neon">Petunjuk Aktivasi Front Desk:</div>
                 <p className="text-[11px] text-zinc-300 leading-relaxed mt-1">
-                  Akun Anda sedang ditinjau oleh staf Front Desk FTL Gym. Saat staf mengklik <em>&quot;Setujui (Approve)&quot;</em> di komputer kasir, akun Anda otomatis menjadi aktif seketika dan QR Code Digital Pass dapat langsung digunakan untuk masuk gym.
+                  Akun Anda sedang ditinjau oleh staf Front Desk One O One Gym. Saat staf mengklik <em>&quot;Setujui (Approve)&quot;</em> di komputer kasir, akun Anda otomatis menjadi aktif seketika dan QR Code Digital Pass dapat langsung digunakan untuk masuk gym.
                 </p>
               </div>
 
               <div className="flex items-center gap-2 pt-2">
                 <a
                   href={`https://wa.me/62895601800302?text=${encodeURIComponent(
-                    `Halo Staf Front Desk FTL Gym, saya baru saja mendaftar akun member atas nama ${liveMember.full_name} (${liveMember.phone}). Mohon bantuannya untuk verifikasi & approval akun saya.`
+                    `Halo Staf Front Desk One O One Gym, saya baru saja mendaftar akun member atas nama ${liveMember.full_name} (${liveMember.phone}). Mohon bantuannya untuk verifikasi & approval akun saya.`
                   )}`}
                   target="_blank"
                   rel="noreferrer"
-                  className="inline-flex items-center gap-1.5 text-xs font-bold text-emerald-400 hover:text-emerald-300 hover:underline"
+                  className="inline-flex items-center gap-1.5 text-xs font-bold text-neon hover:underline"
                 >
                   <MessageCircle className="w-3.5 h-3.5" />
                   <span>Konfirmasi ke WhatsApp Front Desk (0895-6018-00302) →</span>
@@ -201,8 +191,8 @@ export default function MemberDashboardPage() {
           </div>
 
           {refreshNotice && (
-            <div className="p-3 rounded-xl bg-amber-500/20 border border-amber-500/50 text-amber-200 text-xs font-bold flex items-center gap-2 animate-in fade-in">
-              <AlertCircle className="w-4 h-4 shrink-0 text-amber-400" />
+            <div className="p-3 rounded-xl bg-neon/20 border border-neon/50 text-orange-200 text-xs font-bold flex items-center gap-2 animate-in fade-in">
+              <AlertCircle className="w-4 h-4 shrink-0 text-neon" />
               <span>{refreshNotice}</span>
             </div>
           )}
@@ -210,7 +200,7 @@ export default function MemberDashboardPage() {
       ) : null}
 
       {/* ========================================================================= */}
-      {/* 2. RINGKASAN DASHBOARD KONSUMEN (STAT CARDS SEPERTI DASHBOARD STAF)        */}
+      {/* 2. RINGKASAN DASHBOARD KONSUMEN (STAT CARDS TEMA ORANGE & HITAM)           */}
       {/* ========================================================================= */}
       <section className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
         {/* Stat 1: Status Membership */}
@@ -239,13 +229,13 @@ export default function MemberDashboardPage() {
         <Card className="p-4 bg-gym-card border-zinc-800 space-y-2 relative overflow-hidden">
           <div className="flex items-center justify-between">
             <span className="text-[10px] font-bold text-zinc-400 uppercase">Personal Trainer</span>
-            <Flame className="w-3.5 h-3.5 text-amber-400" />
+            <Flame className="w-3.5 h-3.5 text-neon" />
           </div>
           <div>
             <div className="text-base sm:text-lg font-black text-white truncate">
               {hasCoach ? assignedCoach?.name : "Belum Sewa PT"}
             </div>
-            <div className="text-[11px] text-amber-400 font-bold mt-0.5">
+            <div className="text-[11px] text-neon font-bold mt-0.5">
               {hasCoach ? `${sessionsRemaining} Sesi Tersedia` : "Tarif: 300rb - 400rb/sesi"}
             </div>
           </div>
@@ -293,14 +283,14 @@ export default function MemberDashboardPage() {
       {/* ACTIVE PENDING CASH INVOICE ALERT (1-HOUR COUNTDOWN BRIDGE TO CASHIER)    */}
       {/* ========================================================================= */}
       {activeCashInvoice && (
-        <section className="p-4 sm:p-5 rounded-3xl bg-gradient-to-r from-amber-950/80 via-zinc-900 to-black border-2 border-amber-500 shadow-xl space-y-3 animate-in zoom-in-95">
+        <section className="p-4 sm:p-5 rounded-3xl bg-gradient-to-r from-orange-950/80 via-zinc-900 to-black border-2 border-neon shadow-xl space-y-3 animate-in zoom-in-95">
           <div className="flex items-start justify-between gap-3">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-amber-400 text-black flex items-center justify-center font-black shrink-0">
+              <div className="w-10 h-10 rounded-xl bg-neon text-black flex items-center justify-center font-black shrink-0">
                 <Clock className="w-5 h-5 animate-pulse" />
               </div>
               <div>
-                <div className="text-sm font-black text-amber-300">
+                <div className="text-sm font-black text-neon">
                   Tagihan Tunai Menunggu Kasir: {activeCashInvoice.title}
                 </div>
                 <div className="text-xs text-zinc-300 mt-0.5">
@@ -312,7 +302,7 @@ export default function MemberDashboardPage() {
 
             <div className="text-right shrink-0">
               <div className="text-[10px] font-bold text-zinc-400 uppercase">Sisa Waktu:</div>
-              <div className="text-base sm:text-lg font-black font-mono text-amber-400">
+              <div className="text-base sm:text-lg font-black font-mono text-neon">
                 {cashSecondsRemaining > 0 ? cashTimerFormatted : "EXPIRED"}
               </div>
             </div>
@@ -328,17 +318,17 @@ export default function MemberDashboardPage() {
           </div>
 
           <div className="text-xs text-zinc-400 text-center">
-            Tunjukkan barcode ini ke kasir Front Desk gym sebelum batas 1 jam berakhir untuk aktivasi lunas.
+            Tunjukkan barcode ini ke kasir Front Desk One O One Gym sebelum batas 1 jam berakhir untuk aktivasi lunas.
           </div>
         </section>
       )}
 
       {/* ========================================================================= */}
-      {/* 3. TABS MENU KHUSUS CUSTOMER (HANYA APA YANG DIBUTUHKAN MEMBER)           */}
+      {/* 3. TABS MENU KHUSUS CUSTOMER (CLEAN 4 TABS - TANPA JADWAL & SESI)         */}
       {/* ========================================================================= */}
       <section className="space-y-4">
-        {/* Navigation Switcher Tabs */}
-        <div className="grid grid-cols-2 sm:grid-cols-5 p-1.5 bg-zinc-900/90 border border-zinc-800 rounded-2xl gap-1">
+        {/* Navigation Switcher Tabs (4 Bersih: Digital ID, Pembelian, Sewa PT, Transaksi) */}
+        <div className="grid grid-cols-2 sm:grid-cols-4 p-1.5 bg-zinc-900/90 border border-zinc-800 rounded-2xl gap-1">
           <button
             type="button"
             onClick={() => setActiveTab("overview")}
@@ -368,25 +358,14 @@ export default function MemberDashboardPage() {
               activeTab === "pt" ? "bg-neon text-gym-base shadow-neon" : "text-zinc-400 hover:text-white"
             }`}
           >
-            <Flame className="w-3.5 h-3.5 text-amber-400" />
+            <Flame className="w-3.5 h-3.5 text-neon" />
             <span>Sewa Coach (PT)</span>
           </button>
 
           <button
             type="button"
-            onClick={() => setActiveTab("schedule")}
-            className={`py-2 px-3 text-xs font-black rounded-xl transition-all flex items-center justify-center gap-2 ${
-              activeTab === "schedule" ? "bg-neon text-gym-base shadow-neon" : "text-zinc-400 hover:text-white"
-            }`}
-          >
-            <Calendar className="w-3.5 h-3.5" />
-            <span>Jadwal & Sesi</span>
-          </button>
-
-          <button
-            type="button"
             onClick={() => setActiveTab("transactions")}
-            className={`py-2 px-3 text-xs font-black rounded-xl transition-all flex items-center justify-center gap-2 col-span-2 sm:col-span-1 ${
+            className={`py-2 px-3 text-xs font-black rounded-xl transition-all flex items-center justify-center gap-2 ${
               activeTab === "transactions" ? "bg-neon text-gym-base shadow-neon" : "text-zinc-400 hover:text-white"
             }`}
           >
@@ -394,24 +373,6 @@ export default function MemberDashboardPage() {
             <span>Riwayat Transaksi</span>
           </button>
         </div>
-
-        {/* Global Feedback Alert */}
-        {bookingNotice && (
-          <div
-            className={`p-3.5 rounded-2xl border text-xs font-bold flex items-center gap-2 animate-in fade-in ${
-              bookingNotice.success
-                ? "bg-neon/15 border-neon/40 text-neon"
-                : "bg-rose-950/80 border-rose-600 text-rose-300"
-            }`}
-          >
-            {bookingNotice.success ? (
-              <CheckCircle2 className="w-4 h-4 shrink-0" />
-            ) : (
-              <AlertCircle className="w-4 h-4 shrink-0" />
-            )}
-            <span>{bookingNotice.message}</span>
-          </div>
-        )}
 
         {/* ========================================================================= */}
         {/* TAB 1: OVERVIEW / DIGITAL ID PASS & QR CHECK-IN                           */}
@@ -423,7 +384,7 @@ export default function MemberDashboardPage() {
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
               <div>
                 <span className="text-[10px] font-black uppercase text-neon tracking-widest bg-neon/15 px-2.5 py-0.5 rounded border border-neon/30">
-                  DIGITAL PASS • FTL GYM PASS
+                  DIGITAL PASS • ONE O ONE GYM
                 </span>
                 <h2 className="text-xl sm:text-2xl font-black text-white mt-1">
                   {liveMember.full_name}
@@ -447,14 +408,14 @@ export default function MemberDashboardPage() {
               <div
                 dangerouslySetInnerHTML={{
                   __html: generateQRCodeSVG(
-                    liveMember.qr_code_data || `FTL:${liveMember.member_code}:${liveMember.full_name}`,
+                    liveMember.qr_code_data || `101:${liveMember.member_code}:${liveMember.full_name}`,
                     220,
-                    isPendingApproval ? "#F59E0B" : "#E2F952",
+                    isPendingApproval ? "#FFAA00" : "#FF6B00",
                     "#0A0A0A"
                   ),
                 }}
                 className={`flex items-center justify-center p-3 rounded-2xl bg-zinc-950 border-2 shadow-neon-sm ${
-                  isPendingApproval ? "border-amber-500/60 opacity-80" : "border-neon/60"
+                  isPendingApproval ? "border-amber-500/60 opacity-80" : "border-neon/70"
                 }`}
               />
 
@@ -462,7 +423,7 @@ export default function MemberDashboardPage() {
                 <div className="text-xs sm:text-sm font-black text-white tracking-wide">
                   {isPendingApproval
                     ? "QR Code akan aktif seketika setelah disetujui staf admin"
-                    : "Arahkan QR Code ini ke kamera scanner Front Desk FTL Gym"}
+                    : "Arahkan QR Code ini ke kamera scanner Front Desk One O One Gym"}
                 </div>
                 <div className="text-[11px] text-zinc-400">
                   {isPendingApproval
@@ -476,7 +437,7 @@ export default function MemberDashboardPage() {
             <div className="pt-2 flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-t border-zinc-800">
               <div>
                 <div className="text-[10px] text-zinc-400 uppercase font-bold">Masa Berlaku Keanggotaan:</div>
-                <div className={`text-sm sm:text-base font-black ${isPendingApproval ? "text-amber-400" : isExpired ? "text-rose-400" : "text-white"}`}>
+                <div className={`text-sm sm:text-base font-black ${isPendingApproval ? "text-neon" : isExpired ? "text-rose-400" : "text-white"}`}>
                   {isPendingApproval ? "Menunggu Verifikasi Front Desk" : liveMember.expiry_date ? formatWIBDate(liveMember.expiry_date) : "Aktif"}
                 </div>
               </div>
@@ -509,7 +470,7 @@ export default function MemberDashboardPage() {
                 <div>
                   <h3 className="text-base font-black text-white flex items-center gap-2">
                     <CreditCard className="w-4 h-4 text-neon" />
-                    <span>Paket Keanggotaan (Membership Gym)</span>
+                    <span>Paket Keanggotaan One O One Gym</span>
                   </h3>
                   <p className="text-xs text-zinc-400 mt-0.5">
                     Akses tak terbatas ke seluruh alat angkat beban, power rack, dumbbell, dan fasilitas gym.
@@ -534,7 +495,7 @@ export default function MemberDashboardPage() {
                       setPaymentItemType("membership");
                       setIsPaymentModalOpen(true);
                     }}
-                    className="w-full text-xs font-bold border-zinc-700 hover:border-neon"
+                    className="w-full text-xs font-bold border-zinc-700 hover:border-neon hover:text-neon"
                   >
                     Pilih Paket
                   </Button>
@@ -561,7 +522,7 @@ export default function MemberDashboardPage() {
                 </div>
 
                 <div className="p-4 rounded-2xl bg-zinc-900 border border-zinc-800 space-y-2">
-                  <div className="text-[10px] text-amber-400 uppercase font-bold">Paket 1 Tahun (VIP)</div>
+                  <div className="text-[10px] text-neon uppercase font-bold">Paket 1 Tahun (VIP)</div>
                   <div className="text-lg font-black text-white">Rp 2.200.000</div>
                   <p className="text-[11px] text-zinc-400">@ Rp 183rb/bln. Nilai terbaik seumur hidup.</p>
                   <Button
@@ -571,7 +532,7 @@ export default function MemberDashboardPage() {
                       setPaymentItemType("membership");
                       setIsPaymentModalOpen(true);
                     }}
-                    className="w-full text-xs font-bold border-zinc-700 hover:border-amber-400 text-amber-300"
+                    className="w-full text-xs font-bold border-zinc-700 hover:border-neon text-zinc-200 hover:text-neon"
                   >
                     Pilih 1 Tahun
                   </Button>
@@ -612,14 +573,14 @@ export default function MemberDashboardPage() {
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-zinc-800">
                   <div>
                     <h3 className="text-base font-black text-white flex items-center gap-2">
-                      <Flame className="w-4 h-4 text-amber-400" />
+                      <Flame className="w-4 h-4 text-neon" />
                       <span>Pelatih Pribadi Anda: {assignedCoach.name}</span>
                     </h3>
                     <p className="text-xs text-zinc-400 mt-0.5">{assignedCoach.specialty}</p>
                   </div>
 
                   <div className="flex items-center gap-2">
-                    <Badge variant="warning" size="md" className="font-black text-xs">
+                    <Badge variant="neon" size="md" className="font-black text-xs">
                       {sessionsRemaining} Sesi Tersisa
                     </Badge>
                   </div>
@@ -631,14 +592,14 @@ export default function MemberDashboardPage() {
                     <img
                       src={assignedCoach.photo_url}
                       alt={assignedCoach.name}
-                      className="w-14 h-14 rounded-2xl object-cover ring-2 ring-amber-400/60 shrink-0"
+                      className="w-14 h-14 rounded-2xl object-cover ring-2 ring-neon/60 shrink-0"
                     />
                     <div>
                       <div className="text-sm font-black text-white">{assignedCoach.name}</div>
                       <div className="text-xs text-neon font-semibold">{assignedCoach.specialty}</div>
                       <div className="text-[11px] text-zinc-400 flex items-center gap-2 mt-1">
-                        <span className="flex items-center text-amber-400 font-bold">
-                          <Star className="w-3 h-3 fill-amber-400 mr-0.5" />
+                        <span className="flex items-center text-neon font-bold">
+                          <Star className="w-3 h-3 fill-neon mr-0.5" />
                           {assignedCoach.rating}
                         </span>
                         <span>•</span>
@@ -649,7 +610,7 @@ export default function MemberDashboardPage() {
 
                   <a
                     href={`https://wa.me/62895601800302?text=${encodeURIComponent(
-                      `Halo Coach ${assignedCoach.nickname}, saya member ${liveMember.full_name} (${liveMember.member_code}). Saya ingin booking sesi latihan beban berikutnya.`
+                      `Halo Coach ${assignedCoach.nickname}, saya member One O One Gym ${liveMember.full_name} (${liveMember.member_code}). Saya ingin membuat janji sesi latihan beban berikutnya.`
                     )}`}
                     target="_blank"
                     rel="noreferrer"
@@ -687,7 +648,7 @@ export default function MemberDashboardPage() {
                     </div>
                     <div className="p-2 rounded-xl bg-zinc-900 border border-zinc-800">
                       <div className="text-[10px] text-zinc-400 uppercase font-bold">Sisa Kuota</div>
-                      <div className="text-base font-black text-amber-400 mt-0.5">{sessionsRemaining} Sesi</div>
+                      <div className="text-base font-black text-neon mt-0.5">{sessionsRemaining} Sesi</div>
                     </div>
                   </div>
                 </div>
@@ -717,7 +678,7 @@ export default function MemberDashboardPage() {
                     <h3 className="text-base font-black text-white">
                       {hasCoach ? "Pilihan Coach Lainnya" : "Sewa Personal Trainer (Coach Angkat Beban)"}
                     </h3>
-                    <Badge variant="warning" size="sm" className="font-bold text-[9px] uppercase">
+                    <Badge variant="neon" size="sm" className="font-bold text-[9px] uppercase">
                       OPSIONAL
                     </Badge>
                   </div>
@@ -738,7 +699,7 @@ export default function MemberDashboardPage() {
                       key={c.id}
                       className={`p-4 rounded-2xl border transition-all flex flex-col justify-between gap-3 ${
                         isCurrent
-                          ? "bg-zinc-850 border-amber-400 shadow-md"
+                          ? "bg-zinc-850 border-neon shadow-md"
                           : "bg-zinc-900 border-zinc-800 hover:border-zinc-700"
                       }`}
                     >
@@ -758,7 +719,7 @@ export default function MemberDashboardPage() {
                             )}
                           </div>
                           <div className="text-[11px] text-zinc-300 font-medium truncate">{c.specialty}</div>
-                          <div className="text-[11px] text-amber-400 font-bold mt-1">
+                          <div className="text-[11px] text-neon font-bold mt-1">
                             Tarif: {formatRupiah(ratePerSession)} / Sesi
                           </div>
                         </div>
@@ -784,117 +745,11 @@ export default function MemberDashboardPage() {
         )}
 
         {/* ========================================================================= */}
-        {/* TAB 4: JADWAL KELAS BEBAN & SESI TERPAKAI                                  */}
-        {/* ========================================================================= */}
-        {activeTab === "schedule" && (
-          <div className="space-y-4 animate-in fade-in">
-            {/* Weightlifting Sessions Schedule */}
-            <Card className="p-5 sm:p-6 bg-gym-card border-zinc-800 space-y-4">
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-3 border-b border-zinc-800">
-                <div>
-                  <h3 className="text-base font-black text-white flex items-center gap-2">
-                    <Calendar className="w-4 h-4 text-neon" />
-                    <span>Jadwal Sesi Angkat Beban (Strength & Power)</span>
-                  </h3>
-                  <p className="text-xs text-zinc-400 mt-0.5">
-                    Booking slot sebelum datang untuk mengamankan platform power rack dan barbell.
-                  </p>
-                </div>
-
-                <Badge variant="neon" size="sm" className="font-mono">
-                  {weightliftingSessions.length} Sesi Terjadwal
-                </Badge>
-              </div>
-
-              <div className="space-y-2.5">
-                {weightliftingSessions.map((s) => {
-                  const isBooked = s.booked_member_ids?.includes(liveMember.id);
-                  const isFull = s.booked_count >= s.capacity_limit;
-
-                  return (
-                    <div
-                      key={s.id}
-                      className="p-3.5 rounded-2xl bg-zinc-900 border border-zinc-800 flex flex-col sm:flex-row sm:items-center justify-between gap-3"
-                    >
-                      <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-xl bg-neon/15 border border-neon/30 text-neon flex items-center justify-center font-black shrink-0">
-                          <Dumbbell className="w-5 h-5" />
-                        </div>
-                        <div>
-                          <div className="text-xs font-black text-white flex items-center gap-2">
-                            <span>{s.name}</span>
-                            <span className="text-[10px] bg-zinc-800 text-zinc-300 px-2 py-0.5 rounded font-mono">
-                              {s.start_time} - {s.end_time} WIB
-                            </span>
-                          </div>
-                          <div className="text-[11px] text-zinc-400 mt-0.5">
-                            Pelatih: <strong className="text-zinc-200">{s.instructor_name}</strong> • Slot:{" "}
-                            <span className={isFull ? "text-rose-400 font-bold" : "text-neon font-bold"}>
-                              {s.booked_count} / {s.capacity_limit}
-                            </span>
-                          </div>
-                        </div>
-                      </div>
-
-                      <Button
-                        variant={isBooked ? "outline" : isFull ? "secondary" : "neon"}
-                        size="sm"
-                        disabled={isBooked || isFull}
-                        onClick={() => handleBookSession(s.id)}
-                        className="text-xs font-bold py-2 shrink-0"
-                      >
-                        {isBooked ? "✓ Sudah Ter-Booking" : isFull ? "Slot Penuh" : "Booking Sesi Beban"}
-                      </Button>
-                    </div>
-                  );
-                })}
-              </div>
-            </Card>
-
-            {/* Riwayat Check-In & Kunjungan */}
-            <Card className="p-5 sm:p-6 bg-gym-card border-zinc-800 space-y-4">
-              <div className="flex items-center justify-between pb-3 border-b border-zinc-800">
-                <h3 className="text-base font-black text-white flex items-center gap-2">
-                  <History className="w-4 h-4 text-neon" />
-                  <span>Log Kunjungan Kedatangan Member (Check-In)</span>
-                </h3>
-                <span className="text-xs text-zinc-400 font-mono">{memberCheckins.length} Kedatangan</span>
-              </div>
-
-              {memberCheckins.length === 0 ? (
-                <div className="text-center py-8 text-xs text-zinc-500">
-                  Belum ada log check-in kedatangan. Scan QR Code Anda di pintu masuk gym saat datang.
-                </div>
-              ) : (
-                <div className="space-y-2">
-                  {memberCheckins.map((c) => (
-                    <div
-                      key={c.id}
-                      className="p-3 rounded-xl bg-zinc-900/80 border border-zinc-800 flex items-center justify-between text-xs"
-                    >
-                      <div className="flex items-center gap-2.5">
-                        <CheckCircle2 className="w-4 h-4 text-emerald-400" />
-                        <div>
-                          <div className="font-bold text-white">Check-in Scan QR Masuk Gym</div>
-                          <div className="text-[10px] text-zinc-400">{formatWIBDate(c.check_in_time)} pukul {formatWIBTime(c.check_in_time)} WIB</div>
-                        </div>
-                      </div>
-                      <Badge variant="success" size="sm" className="font-mono text-[10px]">
-                        BERHASIL
-                      </Badge>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </Card>
-          </div>
-        )}
-
-        {/* ========================================================================= */}
-        {/* TAB 5: RIWAYAT TRANSAKSI & INVOICE PEMBAYARAN                             */}
+        {/* TAB 4: RIWAYAT TRANSAKSI & KUNJUNGAN CHECK-IN                             */}
         {/* ========================================================================= */}
         {activeTab === "transactions" && (
           <div className="space-y-4 animate-in fade-in">
+            {/* Tabel Riwayat Pembayaran */}
             <Card className="p-5 sm:p-6 bg-gym-card border-zinc-800 space-y-4">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-3 border-b border-zinc-800">
                 <div>
@@ -962,6 +817,43 @@ export default function MemberDashboardPage() {
                       ))}
                     </tbody>
                   </table>
+                </div>
+              )}
+            </Card>
+
+            {/* Riwayat Kunjungan Check-In */}
+            <Card className="p-5 sm:p-6 bg-gym-card border-zinc-800 space-y-4">
+              <div className="flex items-center justify-between pb-3 border-b border-zinc-800">
+                <h3 className="text-base font-black text-white flex items-center gap-2">
+                  <History className="w-4 h-4 text-neon" />
+                  <span>Log Kunjungan Kedatangan Member (Check-In)</span>
+                </h3>
+                <span className="text-xs text-zinc-400 font-mono">{memberCheckins.length} Kedatangan</span>
+              </div>
+
+              {memberCheckins.length === 0 ? (
+                <div className="text-center py-8 text-xs text-zinc-500">
+                  Belum ada log check-in kedatangan. Scan QR Code Anda di pintu masuk gym saat datang.
+                </div>
+              ) : (
+                <div className="space-y-2">
+                  {memberCheckins.map((c) => (
+                    <div
+                      key={c.id}
+                      className="p-3 rounded-xl bg-zinc-900/80 border border-zinc-800 flex items-center justify-between text-xs"
+                    >
+                      <div className="flex items-center gap-2.5">
+                        <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+                        <div>
+                          <div className="font-bold text-white">Check-in Scan QR Masuk One O One Gym</div>
+                          <div className="text-[10px] text-zinc-400">{formatWIBDate(c.check_in_time)} pukul {formatWIBTime(c.check_in_time)} WIB</div>
+                        </div>
+                      </div>
+                      <Badge variant="success" size="sm" className="font-mono text-[10px]">
+                        BERHASIL
+                      </Badge>
+                    </div>
+                  ))}
                 </div>
               )}
             </Card>

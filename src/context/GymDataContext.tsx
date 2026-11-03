@@ -36,13 +36,13 @@ import { exportToCSV, formatRupiah, formatWIBDate, formatWIBDateTime, isExpiring
 const SEED_TENANTS: Tenant[] = [
   {
     id: "tenant-ftl",
-    name: "FTL Gym (Faster Than Light)",
-    slug: "ftl-gym",
+    name: "One O One Gym (101 Gym)",
+    slug: "one-o-one-gym",
     subscription_plan: "multi_club",
     subscription_status: "active",
     mrr_amount: 0,
     max_members: 999999,
-    owner_email: "management@ftlgym.co.id",
+    owner_email: "management@oneoonegym.com",
     owner_phone: "+628118899001",
     created_at: "2026-01-01T08:00:00Z",
   },
@@ -52,8 +52,8 @@ const SEED_CLUBS: Club[] = [
   {
     id: "club-ftl-01",
     tenant_id: "tenant-ftl",
-    name: "FTL Gym Senopati (Pusat)",
-    code: "FTL-JKT",
+    name: "One O One Gym Jakarta Pusat (Pusat)",
+    code: "101-JKT",
     address: "Jl. Senopati No. 88, Kebayoran Baru, Jakarta Selatan",
     city: "Jakarta Selatan",
     phone: "021-7278901",
@@ -1027,7 +1027,7 @@ const SEED_TRANSACTIONS: Transaction[] = [
     member_phone: "+628123456001",
     invoice_code: "INV-FTL-20261025-9921",
     transaction_type: "membership",
-    title: "Membership FTL Gym 1 Tahun (VIP)",
+    title: "Membership One O One Gym 1 Tahun (VIP)",
     description: "Akses VIP 365 Hari ke seluruh area angkat beban",
     amount: 2200000,
     payment_method: "online",
@@ -1668,7 +1668,7 @@ export const GymDataProvider: React.FC<{ children: React.ReactNode }> = ({ child
   // ==============================================================================
   const addMember = (data: Partial<Member>): Member => {
     const nextSeq = members.length + 1;
-    const code = `FTL-0${800 + nextSeq}`;
+    const code = `101-0${800 + nextSeq}`;
     const newMember: Member = {
       id: `mem-${Date.now()}`,
       tenant_id: currentTenant.id,
@@ -1683,7 +1683,7 @@ export const GymDataProvider: React.FC<{ children: React.ReactNode }> = ({ child
       package_price: data.package_price || 250000,
       start_date: data.start_date || new Date().toISOString().slice(0, 10),
       expiry_date: data.expiry_date || new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10),
-      qr_code_data: `FTL:${code}:${data.full_name?.toUpperCase().replace(/\s+/g, "-")}`,
+      qr_code_data: `101:${code}:${data.full_name?.toUpperCase().replace(/\s+/g, "-")}`,
       notes: data.notes || "",
       assigned_sales_id: data.assigned_sales_id || "user-sales-01",
       created_at: new Date().toISOString(),
@@ -1740,7 +1740,7 @@ export const GymDataProvider: React.FC<{ children: React.ReactNode }> = ({ child
     };
 
     const nextSeq = members.length + 1;
-    const code = `FTL-0${800 + nextSeq}`;
+    const code = `101-0${800 + nextSeq}`;
     const price = prices[data.package_type] || 250000;
     const validDays = days[data.package_type] || 30;
 
@@ -1762,7 +1762,7 @@ export const GymDataProvider: React.FC<{ children: React.ReactNode }> = ({ child
       package_price: price,
       start_date: startDate,
       expiry_date: expiryDate,
-      qr_code_data: `FTL:${code}:${data.full_name.toUpperCase().replace(/\s+/g, "-")}`,
+      qr_code_data: `101:${code}:${data.full_name.toUpperCase().replace(/\s+/g, "-")}`,
       notes: "Pendaftaran Online (Menunggu Konfirmasi Pembayaran WhatsApp 0895-6018-00302)",
       created_at: new Date().toISOString(),
       club_name: currentClub.name,
@@ -1867,7 +1867,7 @@ export const GymDataProvider: React.FC<{ children: React.ReactNode }> = ({ child
       created_at: new Date().toISOString(),
       expires_at: new Date(Date.now() + 3600000).toISOString(),
       paid_at: new Date().toISOString(),
-      confirmed_by: "Staf Admin FTL",
+      confirmed_by: "Staf Admin One O One Gym",
       details: {
         package_type: target.package_type,
         coach_id: target.selected_coach_id,
@@ -2142,7 +2142,7 @@ export const GymDataProvider: React.FC<{ children: React.ReactNode }> = ({ child
     details?: any;
   }): Transaction => {
     const member = members.find((m) => m.id === data.memberId);
-    const invoiceCode = `INV-FTL-${new Date().toISOString().slice(0, 10).replace(/-/g, "")}-${Math.floor(1000 + Math.random() * 9000)}`;
+    const invoiceCode = `INV-101-${new Date().toISOString().slice(0, 10).replace(/-/g, "")}-${Math.floor(1000 + Math.random() * 9000)}`;
     const now = new Date();
     const expiresAt = new Date(now.getTime() + 60 * 60 * 1000).toISOString(); // 1 HOUR (60 minutes)
 
@@ -2152,7 +2152,7 @@ export const GymDataProvider: React.FC<{ children: React.ReactNode }> = ({ child
     const newTx: Transaction = {
       id: `tx-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
       member_id: data.memberId,
-      member_name: data.memberName || member?.full_name || "Member FTL",
+      member_name: data.memberName || member?.full_name || "Member One O One Gym",
       member_phone: data.memberPhone || member?.phone || "-",
       invoice_code: invoiceCode,
       transaction_type: data.transactionType,

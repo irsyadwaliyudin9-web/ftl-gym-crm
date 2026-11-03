@@ -11,17 +11,17 @@ export default function CustomerPortalLayout({ children }: { children: React.Rea
       {/* Top Customer Header - Strictly for Customers, NO internal CRM link */}
       <header className="sticky top-0 z-40 bg-gym-card/95 backdrop-blur-md border-b border-gym-border px-4 lg:px-8 py-3.5 flex items-center justify-between shadow-lg">
         <Link href="/portal" className="flex items-center gap-3 group">
-          <div className="w-9 h-9 rounded-xl bg-neon flex items-center justify-center font-black text-gym-base text-lg tracking-tighter shadow-neon-sm group-hover:shadow-neon transition-all">
-            FTL
+          <div className="w-10 h-10 rounded-xl bg-neon flex items-center justify-center font-black text-gym-base text-base tracking-tighter shadow-neon-sm group-hover:shadow-neon transition-all">
+            101
           </div>
           <div>
             <div className="font-extrabold text-white text-base tracking-wide flex items-center gap-1.5">
-              <span>FTL GYM</span>
+              <span>ONE O ONE GYM</span>
               <span className="text-[10px] bg-neon/20 text-neon px-1.5 py-0.5 rounded font-black tracking-widest border border-neon/30 uppercase">
                 Member Portal
               </span>
             </div>
-            <p className="text-[11px] text-zinc-400">Faster Than Light Fitness Club</p>
+            <p className="text-[11px] text-zinc-400">One O One Heavy Strength & Conditioning Club</p>
           </div>
         </Link>
 
@@ -32,7 +32,7 @@ export default function CustomerPortalLayout({ children }: { children: React.Rea
             <span>Pendaftaran Resmi Online</span>
           </div>
           <a
-            href="https://wa.me/62895601800302?text=Halo%20Admin%20FTL%20Gym%2C%20saya%20butuh%20bantuan%20mengenai%20membership%20online."
+            href="https://wa.me/62895601800302?text=Halo%20Admin%20One%20O%20One%20Gym%2C%20saya%20butuh%20bantuan%20mengenai%20membership%20online."
             target="_blank"
             rel="noopener noreferrer"
             className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-600/90 hover:bg-emerald-500 border border-emerald-500/50 text-xs font-bold text-white transition-all shadow-sm"
@@ -55,9 +55,9 @@ export default function CustomerPortalLayout({ children }: { children: React.Rea
         <div className="max-w-6xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-3">
           <div className="flex items-center gap-2">
             <span className="w-2 h-2 rounded-full bg-neon animate-pulse" />
-            <span className="font-semibold text-zinc-400">FTL Gym Senopati (Pusat) — Buka 24 Jam</span>
+            <span className="font-semibold text-zinc-400">One O One Gym Jakarta Pusat — Buka 24 Jam</span>
           </div>
-          <p>© 2026 FTL Gym (Faster Than Light). All Rights Reserved.</p>
+          <p>© 2026 One O One Gym (101 Gym). All Rights Reserved.</p>
         </div>
       </footer>
     </div>

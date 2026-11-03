@@ -136,7 +136,7 @@ export default function DashboardOverviewPage() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5">
             {pendingMembers.map((member) => {
               const waMemberUrl = `https://wa.me/${member.phone.replace(/[^0-9]/g, "")}?text=${encodeURIComponent(
-                `Halo Kak ${member.full_name}, kami dari Admin FTL Gym mengenai pendaftaran membership Anda (${member.member_code}).`
+                `Halo Kak ${member.full_name}, kami dari Admin One O One Gym mengenai pendaftaran membership Anda (${member.member_code}).`
               )}`;
 
               return (

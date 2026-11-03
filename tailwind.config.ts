@@ -12,15 +12,17 @@ const config: Config = {
         gym: {
           base: "#0A0A0A",       // Main pitch dark background
           card: "#121212",       // Card dark grey
-          elevated: "#1A1A1A",   // Raised surface / modal / input
+          elevated: "#18181B",   // Raised surface / modal / input
           border: "#27272A",     // Subdued borders
           hover: "#222225",      // Hover surface
         },
         neon: {
-          DEFAULT: "#E2F952",    // Sporty electric yellow
-          lime: "#DFFF00",       // Bright neon accent
-          muted: "#B8CC3B",      // Subdued neon
-          dim: "rgba(226, 249, 82, 0.15)", // Subtle neon glow background
+          DEFAULT: "#FF6B00",    // Sporty electric orange (One O One Gym)
+          orange: "#FF6B00",     // Pure energetic orange
+          bright: "#FF8533",     // Bright orange accent
+          lime: "#FF8533",       // Bright orange alias
+          muted: "#D95000",      // Deep sports orange
+          dim: "rgba(255, 107, 0, 0.15)", // Subtle orange glow background
         },
       },
       fontFamily: {
@@ -28,9 +30,9 @@ const config: Config = {
         display: ["Montserrat", "Inter", "sans-serif"],
       },
       boxShadow: {
-        "neon": "0 0 20px rgba(226, 249, 82, 0.35)",
-        "neon-sm": "0 0 10px rgba(226, 249, 82, 0.25)",
-        "neon-lg": "0 0 35px rgba(226, 249, 82, 0.45)",
+        "neon": "0 0 20px rgba(255, 107, 0, 0.45)",
+        "neon-sm": "0 0 10px rgba(255, 107, 0, 0.35)",
+        "neon-lg": "0 0 35px rgba(255, 107, 0, 0.6)",
       },
       keyframes: {
         pulseFast: {

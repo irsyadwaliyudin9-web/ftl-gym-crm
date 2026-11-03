@@ -41,9 +41,9 @@ export const DigitalPassModal: React.FC<DigitalPassModalProps> = ({ member, isOp
   };
 
   const handleShare = () => {
-    const text = `Kartu Member FTL Gym: ${member.full_name} (${member.member_code}) - Berlaku hingga ${formatWIBDate(member.expiry_date)}`;
+    const text = `Kartu Member One O One Gym: ${member.full_name} (${member.member_code}) - Berlaku hingga ${formatWIBDate(member.expiry_date)}`;
     if (navigator.share) {
-      navigator.share({ title: "FTL Gym Member Pass", text });
+      navigator.share({ title: "One O One Gym Member Pass", text });
     } else {
       navigator.clipboard.writeText(text);
       alert("Tautan kartu member disalin ke clipboard!");
@@ -51,7 +51,7 @@ export const DigitalPassModal: React.FC<DigitalPassModalProps> = ({ member, isOp
   };
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} maxWidth="md" title="Kartu Member Digital (FTL Gym Pass)">
+    <Modal isOpen={isOpen} onClose={onClose} maxWidth="md" title="Kartu Member Digital (One O One Gym Pass)">
       <div className="flex flex-col items-center gap-6">
         {/* Printable/Downloadable Pass Container */}
         <div
@@ -59,22 +59,22 @@ export const DigitalPassModal: React.FC<DigitalPassModalProps> = ({ member, isOp
           className="w-full max-w-sm rounded-3xl bg-gradient-to-br from-zinc-900 via-black to-zinc-950 border-2 border-zinc-700/80 p-5 shadow-2xl relative overflow-hidden text-white select-none"
         >
           {/* Top Neon Accent Strip */}
-          <div className="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-neon via-neon-lime to-emerald-400" />
+          <div className="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-neon via-neon-lime to-amber-400" />
 
           {/* Watermark Logo */}
           <div className="absolute -right-8 -bottom-8 opacity-5 text-[140px] font-black pointer-events-none text-neon">
-            FTL
+            101
           </div>
 
           {/* Header */}
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-2">
-              <div className="w-8 h-8 rounded-lg bg-neon flex items-center justify-center font-black text-gym-base text-sm shadow-neon-sm">
-                FTL
+              <div className="w-8 h-8 rounded-lg bg-neon flex items-center justify-center font-black text-black text-sm shadow-neon-sm">
+                101
               </div>
               <div>
-                <div className="text-xs font-black tracking-wider text-white">FTL GYM OFFICIAL PASS</div>
-                <div className="text-[10px] text-zinc-400">{member.club_name || "FTL Gym Senopati"}</div>
+                <div className="text-xs font-black tracking-wider text-white">ONE O ONE GYM OFFICIAL PASS</div>
+                <div className="text-[10px] text-zinc-400">{member.club_name || "One O One Gym Jakarta Pusat"}</div>
               </div>
             </div>
 

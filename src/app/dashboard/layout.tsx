@@ -39,7 +39,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           <div>
             <h2 className="text-base font-black text-white">Memeriksa Hak Akses Staf CRM</h2>
             <p className="text-xs text-zinc-400 mt-1">
-              Akses khusus staf FTL Gym. Mengalihkan ke halaman login resmi...
+              Akses khusus staf One O One Gym. Mengalihkan ke halaman login resmi...
             </p>
           </div>
         </div>

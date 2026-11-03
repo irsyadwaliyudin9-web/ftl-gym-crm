@@ -12,11 +12,11 @@ import QRCode from "qrcode";
 export function generateQRCodeSVG(
   data: string,
   size: number = 200,
-  fgColor: string = "#E2F952",
+  fgColor: string = "#FF6B00",
   bgColor: string = "#0A0A0A"
 ): string {
   try {
-    const qr = QRCode.create(data || "FTL-EMPTY", { errorCorrectionLevel: "M" });
+    const qr = QRCode.create(data || "101-EMPTY", { errorCorrectionLevel: "M" });
     const moduleCount = qr.modules.size;
     const margin = 2; // quiet zone
     const totalSize = moduleCount + margin * 2;

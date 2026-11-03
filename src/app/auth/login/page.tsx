@@ -40,12 +40,12 @@ export default function LoginPage() {
       <div className="w-full max-w-md bg-gym-card border-2 border-zinc-700/80 rounded-3xl p-6 sm:p-8 shadow-2xl relative z-10 backdrop-blur-md space-y-6">
         {/* Brand */}
         <div className="flex flex-col items-center text-center">
-          <div className="w-14 h-14 rounded-2xl bg-neon flex items-center justify-center font-black text-gym-base text-2xl shadow-neon mb-3">
-            FTL
+          <div className="w-14 h-14 rounded-2xl bg-neon flex items-center justify-center font-black text-black text-xl shadow-neon mb-3">
+            101
           </div>
-          <h1 className="text-2xl font-black text-white tracking-tight">Login Staf CRM FTL Gym</h1>
+          <h1 className="text-2xl font-black text-white tracking-tight">Login Staf CRM One O One Gym</h1>
           <p className="text-xs text-zinc-400 mt-1">
-            Portal Khusus Operasional & Manajemen Internal FTL Gym
+            Portal Khusus Operasional & Manajemen Internal One O One Gym
           </p>
         </div>
 
@@ -53,7 +53,7 @@ export default function LoginPage() {
         <div className="p-3.5 rounded-2xl bg-zinc-900/90 border border-zinc-800 flex items-start gap-2.5 text-xs text-zinc-300">
           <ShieldCheck className="w-4 h-4 text-neon shrink-0 mt-0.5" />
           <p className="text-[11px] leading-relaxed">
-            Halaman ini khusus untuk staf front desk dan manajemen gym. Silakan gunakan akun email resmi staf FTL Gym.
+            Halaman ini khusus untuk staf front desk dan manajemen gym. Silakan gunakan akun email resmi staf One O One Gym.
           </p>
         </div>
 

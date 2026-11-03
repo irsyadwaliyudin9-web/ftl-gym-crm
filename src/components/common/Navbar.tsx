@@ -35,12 +35,12 @@ export const Navbar: React.FC = () => {
       {/* Brand & Branch Selector */}
       <div className="flex items-center gap-4 lg:gap-6">
         <Link href="/dashboard" className="flex items-center gap-2.5 group">
-          <div className="w-9 h-9 rounded-xl bg-neon flex items-center justify-center font-black text-gym-base text-lg tracking-tighter shadow-neon-sm group-hover:shadow-neon transition-all">
-            FTL
+          <div className="w-9 h-9 rounded-xl bg-neon flex items-center justify-center font-black text-gym-base text-base tracking-tighter shadow-neon-sm group-hover:shadow-neon transition-all">
+            101
           </div>
           <div className="hidden sm:block">
             <div className="font-extrabold text-white text-base tracking-wide flex items-center gap-1.5">
-              <span>FTL Gym</span>
+              <span>One O One Gym</span>
               <span className="text-[10px] bg-neon/20 text-neon px-1.5 py-0.5 rounded font-black tracking-widest border border-neon/30">
                 CRM
               </span>
@@ -147,7 +147,7 @@ export const Navbar: React.FC = () => {
           </div>
           <button
             onClick={() => {
-              if (confirm("Yakin ingin keluar dari akun staf FTL Gym?")) {
+              if (confirm("Yakin ingin keluar dari akun staf One O One Gym?")) {
                 logoutStaff();
                 window.location.href = "/auth/login";
               }

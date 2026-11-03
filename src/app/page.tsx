@@ -157,18 +157,18 @@ export default function SplitPortalAuthPage() {
       {/* Top Header & Branding */}
       <header className="relative z-10 w-full max-w-md mx-auto flex items-center justify-between pt-2 pb-4">
         <div className="flex items-center gap-2.5">
-          <div className="w-10 h-10 rounded-2xl bg-neon flex items-center justify-center font-black text-gym-base text-xl shadow-neon">
-            FTL
+          <div className="w-10 h-10 rounded-2xl bg-neon flex items-center justify-center font-black text-gym-base text-lg shadow-neon">
+            101
           </div>
           <div>
             <div className="flex items-center gap-1.5 font-black text-white text-base tracking-tight leading-none">
-              <span>FTL GYM</span>
+              <span>ONE O ONE GYM</span>
               <span className="text-[9px] bg-neon text-gym-base font-black px-1.5 py-0.5 rounded tracking-wider uppercase">
                 OFFICIAL
               </span>
             </div>
             <div className="text-[11px] text-zinc-400 mt-0.5 font-medium">
-              Faster Than Light Fitness Club
+              One O One Fitness Club • Strength & Heavy Lifting
             </div>
           </div>
         </div>
@@ -189,7 +189,7 @@ export default function SplitPortalAuthPage() {
               {/* Member Portal Header */}
               <div className="text-center space-y-1">
                 <span className="text-[10px] font-black uppercase tracking-widest text-neon bg-neon/15 px-3 py-1 rounded-full border border-neon/30 inline-block mb-1">
-                  Pintu Masuk Member FTL
+                  Pintu Masuk Member One O One Gym
                 </span>
                 <h1 className="text-2xl font-black text-white tracking-tight">
                   {memberMode === "login" ? "Selamat Datang, Champion!" : "Mulai Perjalanan Kebugaran"}
@@ -262,7 +262,7 @@ export default function SplitPortalAuthPage() {
                         required
                         value={memberIdentifier}
                         onChange={(e) => setMemberIdentifier(e.target.value)}
-                        placeholder="Contoh: 081234567890 / FTL-0801"
+                        placeholder="Contoh: 081234567890 / 101-0801"
                         className="w-full bg-gym-elevated border border-zinc-700 rounded-xl pl-10 pr-3.5 py-3 text-xs sm:text-sm text-white placeholder-zinc-500 focus:outline-none focus:border-neon focus:ring-1 focus:ring-neon"
                       />
                     </div>
@@ -453,7 +453,7 @@ export default function SplitPortalAuthPage() {
                   Portal Staf & Manajemen CRM
                 </h2>
                 <p className="text-xs text-zinc-400">
-                  Khusus Front Desk, Trainer, dan Manajemen Operasional FTL Gym.
+                  Khusus Front Desk, Trainer, dan Manajemen Operasional One O One Gym.
                 </p>
               </div>
 
@@ -545,7 +545,7 @@ export default function SplitPortalAuthPage() {
             onClick={() => setShowFacilitiesAccordion(!showFacilitiesAccordion)}
             className="inline-flex items-center gap-1.5 text-xs text-zinc-400 hover:text-white font-semibold transition-colors py-1"
           >
-            <span>Fasilitas Angkat Beban & Coach FTL Gym</span>
+            <span>Fasilitas Angkat Beban & Coach One O One Gym</span>
             {showFacilitiesAccordion ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
           </button>
 
@@ -558,7 +558,7 @@ export default function SplitPortalAuthPage() {
               <ul className="space-y-1.5 text-zinc-400 pl-6 list-disc text-[11px]">
                 <li>Area Barbell Olympic & Platform Deadlift Resmi</li>
                 <li>Power Rack, Smith Machine, & Dumbbell Lengkap hingga 50kg</li>
-                <li>Pelatih Pribadi Bersertifikat: Coach Dian, Coach Rendy, Coach Maya, Coach Kevin</li>
+                <li>Pelatih Pribadi Bersertifikat: Coach Dian, Coach Denny, Coach Maya, Coach Kevin</li>
                 <li>Tarif Personal Trainer: Star dari Rp 300.000 – Rp 400.000 / sesi latihan</li>
               </ul>
             </div>
@@ -568,7 +568,7 @@ export default function SplitPortalAuthPage() {
 
       {/* Footer */}
       <footer className="relative z-10 w-full max-w-md mx-auto text-center pt-4 pb-2 text-[11px] text-zinc-500">
-        © 2026 FTL Gym Indonesia · Faster Than Light Strength & Fitness
+        © 2026 One O One Gym Indonesia · Heavy Strength & Conditioning
       </footer>
     </div>
   );

@@ -509,7 +509,7 @@ export const OmnichannelPaymentModal: React.FC<OmnichannelPaymentModalProps> = (
                 className="flex items-center justify-center"
               />
               <div className="text-[10px] font-black font-mono text-black mt-2">
-                FTL GYM OFFICIAL QRIS
+                ONE O ONE GYM OFFICIAL QRIS
               </div>
             </div>
 

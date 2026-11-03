@@ -57,12 +57,12 @@ export const InstallAppBanner: React.FC = () => {
     <>
       <div className="relative rounded-2xl bg-gradient-to-r from-zinc-900 via-zinc-950 to-black border border-neon/40 p-4 shadow-lg flex flex-col sm:flex-row items-center justify-between gap-3 animate-in fade-in">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-neon text-gym-base flex items-center justify-center font-black shrink-0 shadow-neon-sm">
+          <div className="w-10 h-10 rounded-xl bg-neon text-black flex items-center justify-center font-black shrink-0 shadow-neon-sm">
             <Smartphone className="w-5 h-5" />
           </div>
           <div>
             <div className="text-xs sm:text-sm font-black text-white flex items-center gap-2">
-              <span>Pasang Aplikasi FTL Gym di Smartphone Anda</span>
+              <span>Pasang Aplikasi One O One Gym di Smartphone Anda</span>
               <span className="text-[10px] bg-neon/20 text-neon font-bold px-2 py-0.5 rounded-full uppercase">
                 iOS & Android
               </span>
@@ -76,7 +76,7 @@ export const InstallAppBanner: React.FC = () => {
         <div className="flex items-center gap-2 w-full sm:w-auto shrink-0">
           <button
             onClick={handleInstallClick}
-            className="flex-1 sm:flex-initial py-2 px-4 rounded-xl bg-neon hover:bg-neon-lime text-gym-base font-black text-xs transition-all shadow-neon flex items-center justify-center gap-1.5"
+            className="flex-1 sm:flex-initial py-2 px-4 rounded-xl bg-neon hover:bg-neon-lime text-black font-black text-xs transition-all shadow-neon flex items-center justify-center gap-1.5"
           >
             <Download className="w-4 h-4 stroke-[2.5]" />
             <span>{isIOS ? "Panduan Pasang di iPhone" : "Install Aplikasi"}</span>
@@ -103,12 +103,12 @@ export const InstallAppBanner: React.FC = () => {
             </button>
 
             <div className="flex items-center gap-3">
-              <div className="w-12 h-12 rounded-2xl bg-neon text-gym-base flex items-center justify-center font-black text-lg shadow-neon-sm">
-                FTL
+              <div className="w-12 h-12 rounded-2xl bg-neon text-black flex items-center justify-center font-black text-lg shadow-neon-sm">
+                101
               </div>
               <div>
                 <h3 className="text-base font-black text-white">Cara Pasang di HP (iOS & Android)</h3>
-                <p className="text-xs text-zinc-400">Aplikasi FTL Gym Pass & CRM</p>
+                <p className="text-xs text-zinc-400">Aplikasi One O One Gym Pass & CRM</p>
               </div>
             </div>
 
@@ -122,7 +122,7 @@ export const InstallAppBanner: React.FC = () => {
                   <p>1. Buka website ini di browser <strong>Safari</strong>.</p>
                   <p>2. Ketuk ikon <strong>Bagikan (Share ⬆️)</strong> di menu bawah Safari.</p>
                   <p>3. Geser ke bawah lalu pilih <strong>"Tambah ke Layar Utama" (Add to Home Screen)</strong>.</p>
-                  <p>4. Ikon FTL Gym akan muncul di menu iPhone Anda seperti aplikasi App Store!</p>
+                  <p>4. Ikon One O One Gym akan muncul di menu iPhone Anda seperti aplikasi App Store!</p>
                 </div>
               </div>
 
@@ -134,14 +134,14 @@ export const InstallAppBanner: React.FC = () => {
                 <div className="pl-7 space-y-1 text-zinc-300">
                   <p>1. Ketuk tombol titik tiga (⋮) di pojok kanan atas browser Chrome.</p>
                   <p>2. Pilih <strong>"Install Aplikasi"</strong> atau <strong>"Tambahkan ke Layar Utama"</strong>.</p>
-                  <p>3. Aplikasi FTL Gym langsung terpasang di daftar aplikasi HP Anda!</p>
+                  <p>3. Aplikasi One O One Gym langsung terpasang di daftar aplikasi HP Anda!</p>
                 </div>
               </div>
             </div>
 
             <button
               onClick={() => setShowIOSModal(false)}
-              className="w-full py-2.5 rounded-xl bg-neon text-gym-base font-black text-xs shadow-neon transition-all"
+              className="w-full py-2.5 rounded-xl bg-neon text-black font-black text-xs shadow-neon transition-all"
             >
               Mengerti, Tutup Panduan
             </button>

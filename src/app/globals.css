@@ -5,7 +5,8 @@
 :root {
   --background: #0a0a0a;
   --foreground: #f4f4f5;
-  --neon-yellow: #e2f952;
+  --neon-orange: #ff6b00;
+  --neon-yellow: #ff6b00;
 }
 
 body {
@@ -32,20 +33,20 @@ body {
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #e2f952;
+  background: #ff6b00;
 }
 
-/* Sporty Neon Highlights */
+/* Sporty Orange Highlights */
 .neon-glow {
-  box-shadow: 0 0 15px rgba(226, 249, 82, 0.35);
+  box-shadow: 0 0 15px rgba(255, 107, 0, 0.45);
 }
 
 .neon-glow-lg {
-  box-shadow: 0 0 30px rgba(226, 249, 82, 0.45);
+  box-shadow: 0 0 30px rgba(255, 107, 0, 0.6);
 }
 
 .neon-text-glow {
-  text-shadow: 0 0 12px rgba(226, 249, 82, 0.6);
+  text-shadow: 0 0 12px rgba(255, 107, 0, 0.7);
 }
 
 .danger-glow {
@@ -77,8 +78,8 @@ body {
   left: 5%;
   right: 5%;
   height: 3px;
-  background: #e2f952;
-  box-shadow: 0 0 12px #e2f952, 0 0 24px #e2f952;
+  background: #ff6b00;
+  box-shadow: 0 0 12px #ff6b00, 0 0 24px #ff6b00;
   animation: laserSweep 2s cubic-bezier(0.4, 0, 0.2, 1) infinite;
   pointer-events: none;
 }

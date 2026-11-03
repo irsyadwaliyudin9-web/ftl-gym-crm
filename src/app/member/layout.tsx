@@ -32,7 +32,7 @@ export default function MemberLayout({ children }: { children: React.ReactNode }
   }, [isMemberAuthenticated, router]);
 
   const handleLogout = () => {
-    if (confirm("Keluar dari Member App FTL Gym?")) {
+    if (confirm("Keluar dari Member App One O One Gym?")) {
       logoutMember();
       router.push("/");
     }
@@ -43,9 +43,9 @@ export default function MemberLayout({ children }: { children: React.ReactNode }
       <div className="min-h-screen bg-gym-base flex items-center justify-center p-4">
         <div className="text-center space-y-3">
           <div className="w-12 h-12 rounded-2xl bg-neon text-gym-base font-black flex items-center justify-center mx-auto shadow-neon animate-pulse text-lg">
-            FTL
+            101
           </div>
-          <p className="text-xs text-zinc-400 font-bold">Memuat Akun Member...</p>
+          <p className="text-xs text-zinc-400 font-bold">Memuat Akun Member One O One Gym...</p>
         </div>
       </div>
     );
@@ -57,17 +57,17 @@ export default function MemberLayout({ children }: { children: React.ReactNode }
       <header className="sticky top-0 z-40 bg-gym-card/95 backdrop-blur-md border-b border-zinc-800 px-4 sm:px-6 py-3.5 shadow-md">
         <div className="max-w-6xl mx-auto flex items-center justify-between gap-3">
           <Link href="/member/dashboard" className="flex items-center gap-3 group">
-            <div className="w-9 h-9 rounded-xl bg-neon text-gym-base font-black flex items-center justify-center text-sm shadow-neon-sm group-hover:scale-105 transition-transform">
-              FTL
+            <div className="w-10 h-10 rounded-xl bg-neon text-gym-base font-black flex items-center justify-center text-base shadow-neon-sm group-hover:scale-105 transition-transform">
+              101
             </div>
             <div>
               <div className="text-sm sm:text-base font-black text-white leading-tight flex items-center gap-1.5">
-                <span>DASHBOARD MEMBER</span>
+                <span>ONE O ONE GYM</span>
                 <span className="text-[9px] bg-neon/20 text-neon font-black px-1.5 py-0.5 rounded border border-neon/40">
-                  SPORT
+                  MEMBER
                 </span>
               </div>
-              <div className="text-[11px] text-zinc-400 font-medium">Faster Than Light Gym • Jakarta Pusat</div>
+              <div className="text-[11px] text-zinc-400 font-medium">One O One Gym • Heavy Strength & Conditioning</div>
             </div>
           </Link>
 
@@ -107,7 +107,7 @@ export default function MemberLayout({ children }: { children: React.ReactNode }
 
       {/* Bottom Footer */}
       <footer className="w-full max-w-6xl mx-auto text-center py-5 text-xs text-zinc-600 border-t border-zinc-800/80">
-        FTL Gym Member Ecosystem · Portal Khusus Member Beban & Fitness · © 2026 FTL Gym
+        One O One Gym Member Ecosystem · Portal Khusus Member Beban & Fitness · © 2026 One O One Gym
       </footer>
     </div>
   );
