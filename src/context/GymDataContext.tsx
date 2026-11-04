@@ -1336,6 +1336,61 @@ export const GymDataProvider: React.FC<{ children: React.ReactNode }> = ({ child
     }
   }, []);
 
+  // Cloud synchronization across devices (Mobile Phone <-> Staff PC)
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    const syncWithCloud = async () => {
+      try {
+        const res = await fetch("/api/cloud-sync", { cache: "no-store" });
+        if (res.ok) {
+          const data = await res.json();
+          if (Array.isArray(data.members) && data.members.length > 0) {
+            setMembers((prev) => {
+              let changed = false;
+              const prevMap = new Map(prev.map((m) => [m.id, m]));
+
+              data.members.forEach((cm: Member) => {
+                const local = prevMap.get(cm.id);
+                if (!local || local.status !== cm.status) {
+                  prevMap.set(cm.id, cm);
+                  changed = true;
+                }
+              });
+
+              if (changed) {
+                const updated = Array.from(prevMap.values());
+                try {
+                  const saved = localStorage.getItem(LOCAL_STORAGE_KEY);
+                  const parsed = saved ? JSON.parse(saved) : {};
+                  parsed.members = updated;
+                  localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(parsed));
+                } catch (e) {}
+                return updated;
+              }
+              return prev;
+            });
+          }
+
+          if (Array.isArray(data.transactions) && data.transactions.length > 0) {
+            setTransactions((prev) => {
+              const existingIds = new Set(prev.map((t) => t.id));
+              const missing = data.transactions.filter((t: Transaction) => !existingIds.has(t.id));
+              if (missing.length > 0) {
+                return [...missing, ...prev];
+              }
+              return prev;
+            });
+          }
+        }
+      } catch (err) {}
+    };
+
+    syncWithCloud();
+    const interval = setInterval(syncWithCloud, 4000);
+    return () => clearInterval(interval);
+  }, []);
+
   // Real-time synchronization across browser tabs (Portal Customer <-> Staff CRM)
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -1825,6 +1880,15 @@ export const GymDataProvider: React.FC<{ children: React.ReactNode }> = ({ child
         bc.postMessage({ type: "SYNC_MEMBERS", members: updatedMembers, newMember });
         bc.close();
       }
+
+      // Sync to cloud API across devices
+      if (typeof window !== "undefined") {
+        fetch("/api/cloud-sync", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ action: "register", member: newMember }),
+        }).catch(() => {});
+      }
     } catch (e) {}
 
     return { success: true, member: newMember };
@@ -1931,6 +1995,15 @@ export const GymDataProvider: React.FC<{ children: React.ReactNode }> = ({ child
         bc.postMessage({ type: "SYNC_TRANSACTIONS", transaction: regTx });
         bc.close();
       }
+
+      // Sync approval to cloud API across devices
+      if (typeof window !== "undefined") {
+        fetch("/api/cloud-sync", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ action: "approve", memberId }),
+        }).catch(() => {});
+      }
     } catch (e) {}
 
     // If member selected a coach during online registration, activate their PT package
@@ -1992,6 +2065,15 @@ export const GymDataProvider: React.FC<{ children: React.ReactNode }> = ({ child
         const bc = new BroadcastChannel("ftl_gym_sync_v4");
         bc.postMessage({ type: "SYNC_MEMBERS", members: updatedMembers });
         bc.close();
+      }
+
+      // Sync rejection to cloud API across devices
+      if (typeof window !== "undefined") {
+        fetch("/api/cloud-sync", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ action: "reject", memberId }),
+        }).catch(() => {});
       }
     } catch (e) {}
 

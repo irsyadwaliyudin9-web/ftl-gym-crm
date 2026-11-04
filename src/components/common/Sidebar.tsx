@@ -127,21 +127,21 @@ export const Sidebar: React.FC = () => {
         )}
       </div>
 
-      {/* Customer Portal Shortcut */}
+      {/* Member App Mobile Portal Shortcut */}
       <div className="pt-4 border-t border-gym-border/80 text-xs">
         <Link
-          href="/portal"
+          href="/member/dashboard"
           className="block bg-zinc-900/80 hover:bg-zinc-800/90 rounded-xl p-3 border border-zinc-800 hover:border-neon/50 transition-colors group"
         >
           <div className="flex items-center justify-between text-[11px] text-zinc-400 mb-1">
             <span className="font-bold text-white flex items-center gap-1.5">
               <Dumbbell className="w-3.5 h-3.5 text-neon" />
-              <span>Portal Member</span>
+              <span>Member App</span>
             </span>
-            <span className="text-[10px] bg-neon/15 text-neon px-1.5 py-0.5 rounded font-bold">ONLINE</span>
+            <span className="text-[10px] bg-neon/15 text-neon px-1.5 py-0.5 rounded font-bold">101 APP</span>
           </div>
-          <div className="text-[11px] text-zinc-400 mt-0.5">Daftar Paket & Pilih Coach Dian</div>
-          <div className="text-[10px] text-neon font-bold mt-1 group-hover:underline">Buka Halaman Customer →</div>
+          <div className="text-[11px] text-zinc-400 mt-0.5">Dashboard Member & QR Pass Digital</div>
+          <div className="text-[10px] text-neon font-bold mt-1 group-hover:underline">Buka Tampilan Member →</div>
         </Link>
       </div>
     </aside>

@@ -22,6 +22,8 @@ import {
   Sparkles,
   ChevronDown,
   ChevronUp,
+  Clock,
+  MessageCircle,
 } from "lucide-react";
 
 export default function SplitPortalAuthPage() {
@@ -57,6 +59,7 @@ export default function SplitPortalAuthPage() {
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [showFacilitiesAccordion, setShowFacilitiesAccordion] = useState(false);
+  const [registeredPendingInfo, setRegisteredPendingInfo] = useState<{ name: string; code: string; phone: string } | null>(null);
 
   // Handle Member Login
   const handleMemberLogin = (e: React.FormEvent) => {
@@ -114,10 +117,13 @@ export default function SplitPortalAuthPage() {
       setIsLoading(false);
 
       if (res.success) {
-        setSuccessMessage(res.message);
-        setTimeout(() => {
-          router.push("/member/dashboard");
-        }, 500);
+        setRegisteredPendingInfo({
+          name: regFullName.trim(),
+          code: res.member?.member_code || "101-NEW",
+          phone: regPhone.trim(),
+        });
+        setSuccessMessage(null);
+        setErrorMessage(null);
       } else {
         setErrorMessage(res.message);
       }
@@ -212,37 +218,113 @@ export default function SplitPortalAuthPage() {
                 </p>
               </div>
 
-              {/* Dual Switcher: Masuk vs Daftar */}
-              <div className="grid grid-cols-2 p-1.5 bg-zinc-900/90 border border-zinc-800 rounded-2xl gap-1">
-                <button
-                  type="button"
-                  onClick={() => {
-                    setMemberMode("login");
-                    setErrorMessage(null);
-                  }}
-                  className={`py-2.5 text-xs font-black rounded-xl transition-all ${
-                    memberMode === "login"
-                      ? "bg-neon text-gym-base shadow-neon"
-                      : "text-zinc-400 hover:text-white"
-                  }`}
-                >
-                  Masuk sebagai Member
-                </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setMemberMode("register");
-                    setErrorMessage(null);
-                  }}
-                  className={`py-2.5 text-xs font-black rounded-xl transition-all ${
-                    memberMode === "register"
-                      ? "bg-neon text-gym-base shadow-neon"
-                      : "text-zinc-400 hover:text-white"
-                  }`}
-                >
-                  Daftar Member Baru
-                </button>
-              </div>
+              {/* Jika Baru Mendaftar: Tampilkan Layar Konfirmasi Menunggu Approval */}
+              {registeredPendingInfo ? (
+                <div className="space-y-4 py-1 animate-in fade-in zoom-in-95">
+                  <div className="p-4 sm:p-5 rounded-2xl bg-zinc-900 border-2 border-neon/50 text-center space-y-3 shadow-xl">
+                    <div className="w-14 h-14 rounded-2xl bg-neon/15 border border-neon/40 flex items-center justify-center mx-auto text-neon shadow-neon-sm">
+                      <Clock className="w-7 h-7 text-neon" />
+                    </div>
+                    
+                    <div>
+                      <span className="text-[10px] font-black uppercase tracking-wider bg-amber-500/20 text-amber-400 border border-amber-500/40 px-2.5 py-1 rounded-full">
+                        ⏳ Menunggu Approval Staf
+                      </span>
+                      <h3 className="text-base sm:text-lg font-black text-white mt-2">
+                        Pendaftaran Berhasil Dikirim!
+                      </h3>
+                      <p className="text-xs text-zinc-300 mt-1 leading-relaxed">
+                        Halo <strong className="text-white">{registeredPendingInfo.name}</strong>, akun Anda telah tercatat dengan kode member:
+                      </p>
+                      <div className="text-sm font-black text-neon font-mono bg-neon/10 py-1 px-3 rounded-lg inline-block mt-1 border border-neon/20">
+                        {registeredPendingInfo.code}
+                      </div>
+                    </div>
+
+                    <div className="p-3 rounded-xl bg-black/70 border border-zinc-800 text-left text-xs text-zinc-300 space-y-1.5 font-mono">
+                      <div className="flex justify-between">
+                        <span className="text-zinc-500">Nama:</span>
+                        <span className="text-white font-bold">{registeredPendingInfo.name}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-zinc-500">No. WA:</span>
+                        <span className="text-white font-bold">{registeredPendingInfo.phone}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-zinc-500">Cabang:</span>
+                        <span className="text-white font-bold">Garut Kota (Pusat)</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-zinc-500">Status:</span>
+                        <span className="text-amber-400 font-bold">Menunggu Approval Staf</span>
+                      </div>
+                    </div>
+
+                    <p className="text-[11px] text-zinc-400 leading-normal text-left sm:text-center">
+                      Sesuai SOP One O One Gym Garut Kota, akun member baru harus disetujui staf front desk kasir sebelum dapat login dan menggunakan QR Code check-in.
+                    </p>
+                  </div>
+
+                  <div className="space-y-2">
+                    <a
+                      href={`https://wa.me/62895601800302?text=${encodeURIComponent(
+                        `Halo Admin Front Desk One O One Gym Garut Kota, saya telah mendaftar akun member baru atas nama "${registeredPendingInfo.name}" (Kode: ${registeredPendingInfo.code}, No WA: ${registeredPendingInfo.phone}). Mohon bantuannya untuk menyetujui (approve) akun saya agar bisa segera login. Terima kasih!`
+                      )}`}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="w-full py-3 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-black text-xs sm:text-sm flex items-center justify-center gap-2 shadow-lg transition-all"
+                    >
+                      <MessageCircle className="w-4 h-4" />
+                      <span>Konfirmasi Approval via WhatsApp</span>
+                    </a>
+
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setRegisteredPendingInfo(null);
+                        setMemberMode("login");
+                        setMemberIdentifier(registeredPendingInfo.phone);
+                      }}
+                      className="w-full py-2.5 px-4 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-zinc-200 font-bold text-xs flex items-center justify-center gap-2 transition-colors border border-zinc-700"
+                    >
+                      <span>Sudah Diapprove Staf? Ke Form Login</span>
+                      <ArrowRight className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <>
+                  {/* Dual Switcher: Masuk vs Daftar */}
+                  <div className="grid grid-cols-2 p-1.5 bg-zinc-900/90 border border-zinc-800 rounded-2xl gap-1">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setMemberMode("login");
+                        setErrorMessage(null);
+                      }}
+                      className={`py-2.5 text-xs font-black rounded-xl transition-all ${
+                        memberMode === "login"
+                          ? "bg-neon text-gym-base shadow-neon"
+                          : "text-zinc-400 hover:text-white"
+                      }`}
+                    >
+                      Masuk sebagai Member
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setMemberMode("register");
+                        setErrorMessage(null);
+                      }}
+                      className={`py-2.5 text-xs font-black rounded-xl transition-all ${
+                        memberMode === "register"
+                          ? "bg-neon text-gym-base shadow-neon"
+                          : "text-zinc-400 hover:text-white"
+                      }`}
+                    >
+                      Daftar Member Baru
+                    </button>
+                  </div>
 
               {/* Feedback Alerts */}
               {errorMessage && (
@@ -419,6 +501,8 @@ export default function SplitPortalAuthPage() {
                   </Button>
                 </form>
               )}
+            </>
+          )}
 
               {/* PINTU STAF TRIGGER LINK (DISCREET BOTTOM LINK) */}
               <div className="pt-4 border-t border-zinc-800/80 text-center">

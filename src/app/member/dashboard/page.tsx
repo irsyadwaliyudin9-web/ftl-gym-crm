@@ -603,7 +603,7 @@ export default function MemberDashboardPage() {
                           {assignedCoach.rating}
                         </span>
                         <span>•</span>
-                        <span>Jadwal: {assignedCoach.available_days}</span>
+                        <span>Ketersediaan: {assignedCoach.available_days}</span>
                       </div>
                     </div>
                   </div>

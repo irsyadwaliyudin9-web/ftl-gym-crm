@@ -4,7 +4,7 @@ import React, { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
-import { LogOut, User, Bell, ShieldCheck } from "lucide-react";
+import { LogOut, User, Bell, ShieldCheck, Clock, MessageCircle } from "lucide-react";
 
 export default function MemberLayout({ children }: { children: React.ReactNode }) {
   const router = useRouter();
@@ -51,6 +51,64 @@ export default function MemberLayout({ children }: { children: React.ReactNode }
     );
   }
 
+  // GATEWAY GUARD: If member is pending approval, block access and show waiting screen
+  if (currentMember?.status === "pending_approval" || currentMember?.payment_proof_status === "pending") {
+    return (
+      <div className="min-h-screen bg-gym-base flex items-center justify-center p-4">
+        <div className="bg-gym-card border-2 border-amber-500/80 rounded-3xl p-6 sm:p-8 max-w-md w-full text-center space-y-5 shadow-2xl">
+          <div className="w-16 h-16 rounded-2xl bg-amber-500/20 text-amber-400 flex items-center justify-center mx-auto border border-amber-500/50 shadow-lg">
+            <Clock className="w-8 h-8 animate-pulse" />
+          </div>
+          <div>
+            <span className="text-[10px] font-black uppercase tracking-wider bg-amber-500/20 text-amber-300 border border-amber-500/40 px-2.5 py-1 rounded-full">
+              STATUS: MENUNGGU PERSETUJUAN (PENDING APPROVAL)
+            </span>
+            <h2 className="text-xl font-black text-white mt-3">Akun Anda Dalam Antrean Verifikasi</h2>
+            <p className="text-xs text-zinc-400 mt-2 leading-relaxed">
+              Halo <strong>{currentMember.full_name}</strong> ({currentMember.member_code}), pendaftaran Anda telah tercatat di Front Desk One O One Gym Garut Kota. Anda dapat mengakses dashboard setelah akun disetujui staf admin.
+            </p>
+          </div>
+          <div className="p-4 rounded-2xl bg-zinc-900 border border-zinc-800 text-xs text-left space-y-2">
+            <div className="flex justify-between">
+              <span className="text-zinc-500">Nama:</span>
+              <span className="text-white font-bold">{currentMember.full_name}</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-zinc-500">No. WhatsApp:</span>
+              <span className="text-white font-bold">{currentMember.phone}</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-zinc-500">Status Akun:</span>
+              <span className="text-amber-400 font-bold">Menunggu Persetujuan Staf</span>
+            </div>
+          </div>
+          <div className="space-y-2">
+            <a
+              href={`https://wa.me/62895601800302?text=${encodeURIComponent(
+                `Halo Admin One O One Gym Garut Kota, saya (${currentMember.full_name} / ${currentMember.member_code}) sudah mendaftar dan menunggu persetujuan (approval) akun.`
+              )}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="w-full py-3 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-black text-xs transition-all shadow-md flex items-center justify-center gap-2"
+            >
+              <MessageCircle className="w-4 h-4" />
+              <span>Hubungi WhatsApp Admin (0895-6018-00302)</span>
+            </a>
+            <button
+              onClick={() => {
+                logoutMember();
+                router.push("/");
+              }}
+              className="w-full py-2.5 px-4 rounded-xl bg-zinc-900 hover:bg-zinc-800 text-zinc-300 font-bold text-xs transition-all border border-zinc-800"
+            >
+              Kembali ke Halaman Utama
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-gym-base text-zinc-100 flex flex-col selection:bg-neon selection:text-black">
       {/* Top Professional Header (Mobile & Desktop Responsive) */}
@@ -82,7 +140,7 @@ export default function MemberLayout({ children }: { children: React.ReactNode }
                     {currentMember.full_name}
                   </div>
                   <div className="text-[10px] text-zinc-400 font-mono">
-                    {currentMember.member_code} • {currentMember.status === "pending_approval" ? "Menunggu Approval" : "Aktif"}
+                    {currentMember.member_code} • {currentMember.status === "active" ? "Aktif" : "Expired"}
                   </div>
                 </div>
               </div>

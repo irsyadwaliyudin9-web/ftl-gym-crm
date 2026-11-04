@@ -223,8 +223,8 @@ export default function DashboardOverviewPage() {
               <span className="text-zinc-400">Semua pendaftaran telah diproses (0 pending). Pendaftaran baru dari portal online akan muncul di sini secara otomatis.</span>
             </div>
           </div>
-          <Link href="/portal" className="text-neon hover:underline font-bold shrink-0 text-xs flex items-center gap-1">
-            <span>Buka Portal Customer</span>
+          <Link href="/member/dashboard" className="text-neon hover:underline font-bold shrink-0 text-xs flex items-center gap-1">
+            <span>Buka Tampilan Member</span>
             <ArrowRight className="w-3.5 h-3.5" />
           </Link>
         </Card>

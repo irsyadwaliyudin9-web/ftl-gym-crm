@@ -14,8 +14,8 @@ interface AuthContextType {
   setCurrentMember: (member: Member | null) => void;
   loginStaff: (email: string, pass: string) => { success: boolean; message: string };
   logoutStaff: () => void;
-  loginMember: (identifier: string, pass?: string) => { success: boolean; member?: Member; message: string };
-  registerMember: (data: { fullName: string; phone: string; email: string; password?: string }) => { success: boolean; member?: Member; message: string };
+  loginMember: (identifier: string, pass?: string) => { success: boolean; member?: Member; message: string; isPendingApproval?: boolean };
+  registerMember: (data: { fullName: string; phone: string; email: string; password?: string }) => { success: boolean; member?: Member; message: string; isPendingApproval?: boolean };
   logoutMember: () => void;
   loginAsRole: (role: UserRole) => void;
   logout: () => void;
@@ -58,7 +58,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         const savedMember = localStorage.getItem("ftl_member_session");
         if (savedMember) {
           const parsed = JSON.parse(savedMember);
-          if (parsed && parsed.id) {
+          // Only automatically authenticate if member is fully active/approved
+          if (parsed && parsed.id && parsed.status === "active") {
             setCurrentMember(parsed);
             setIsMemberAuthenticated(true);
           }
@@ -117,7 +118,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     } catch (e) {}
   };
 
-  const loginMember = (identifier: string, pass?: string): { success: boolean; member?: Member; message: string } => {
+  const loginMember = (
+    identifier: string,
+    pass?: string
+  ): { success: boolean; member?: Member; message: string; isPendingApproval?: boolean } => {
     const clean = identifier.trim().toLowerCase();
     const cleanDigits = clean.replace(/[^0-9]/g, "");
 
@@ -172,6 +176,19 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     });
 
     if (matched) {
+      const isPending = matched.status === "pending_approval" || matched.payment_proof_status === "pending";
+
+      // If pending, BLOCK login to member dashboard
+      if (isPending) {
+        return {
+          success: false,
+          isPendingApproval: true,
+          member: matched,
+          message: `Akun Anda (${matched.full_name}) masih dalam status MENUNGGU PERSETUJUAN (Approval) oleh staf admin Front Desk One O One Gym Garut Kota. Anda baru dapat masuk ke dashboard setelah akun disetujui staf. Silakan hubungi WhatsApp Admin 0895-6018-00302 untuk aktivasi cepat.`,
+        };
+      }
+
+      // If active, permit login
       setCurrentMember(matched);
       setIsMemberAuthenticated(true);
       try {
@@ -179,12 +196,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         localStorage.setItem("ftl_portal_member_id", matched.id);
       } catch (e) {}
 
-      const isPending = matched.status === "pending_approval" || matched.payment_proof_status === "pending";
-      const welcomeMsg = isPending
-        ? `Selamat datang kembali, ${matched.full_name}! Akun Anda sedang menunggu persetujuan (approval) staf admin One O One Gym.`
-        : `Selamat datang kembali, ${matched.full_name}!`;
-
-      return { success: true, member: matched, message: welcomeMsg };
+      return {
+        success: true,
+        member: matched,
+        message: `Selamat datang kembali, ${matched.full_name}!`,
+      };
     }
 
     return {
@@ -198,7 +214,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     phone: string;
     email: string;
     password?: string;
-  }): { success: boolean; member?: Member; message: string } => {
+  }): { success: boolean; member?: Member; message: string; isPendingApproval?: boolean } => {
     const cleanPhone = data.phone.trim();
     const cleanEmail = data.email.trim().toLowerCase();
     const cleanName = data.fullName.trim();
@@ -228,11 +244,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       password: data.password,
     };
 
-    setCurrentMember(newMember);
-    setIsMemberAuthenticated(true);
+    // Do NOT automatically log in member until staff approves
+    setCurrentMember(null);
+    setIsMemberAuthenticated(false);
 
     try {
-      localStorage.setItem("ftl_member_session", JSON.stringify(newMember));
+      localStorage.setItem("ftl_pending_registration", JSON.stringify(newMember));
       localStorage.setItem("ftl_portal_member_id", newMember.id);
 
       // Helper to update state in both v4 and legacy keys
@@ -287,12 +304,26 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         bc.postMessage({ type: "SYNC_TRANSACTIONS", transaction: resV4.transaction });
         bc.close();
       }
+
+      // Sync across all devices via Next.js Cloud Sync API
+      if (typeof window !== "undefined") {
+        fetch("/api/cloud-sync", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            action: "register",
+            member: newMember,
+            transaction: resV4.transaction,
+          }),
+        }).catch(() => {});
+      }
     } catch (e) {}
 
     return {
       success: true,
       member: newMember,
-      message: `Pendaftaran berhasil! Akun Anda sedang dalam antrean verifikasi & persetujuan (approval) staf admin One O One Gym.`,
+      isPendingApproval: true,
+      message: `Pendaftaran berhasil! Akun Anda (${newMember.full_name}) sedang dalam antrean verifikasi & persetujuan (Approval) staf admin One O One Gym Garut Kota. Anda dapat login setelah disetujui staf.`,
     };
   };
 

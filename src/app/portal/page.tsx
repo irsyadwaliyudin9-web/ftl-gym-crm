@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useRef } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useGymData } from "@/context/GymDataContext";
 import { formatRupiah, formatWIBDate } from "@/lib/utils";
 import { soundManager } from "@/components/common/SoundEffects";
@@ -40,10 +41,16 @@ import { Card } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 
-type TabType = "pass" | "pt-schedule" | "membership" | "login";
+type TabType = "pass" | "membership" | "login";
 
 export default function CustomerPortalPage() {
+  const router = useRouter();
   const { coaches, registerOnlineMember, loginCustomer, members } = useGymData();
+
+  // Redirect to official unified Member App
+  useEffect(() => {
+    router.replace("/member/dashboard");
+  }, [router]);
 
   // Active Tab - Default to "membership" if no member saved, or "pass" if already registered
   const [activeTab, setActiveTab] = useState<TabType>("membership");
@@ -332,18 +339,6 @@ export default function CustomerPortalPage() {
           </button>
 
           <button
-            onClick={() => setActiveTab("pt-schedule")}
-            className={`px-4 py-2 rounded-xl text-xs sm:text-sm font-black transition-all flex items-center gap-2 ${
-              activeTab === "pt-schedule"
-                ? "bg-neon text-gym-base shadow-neon"
-                : "bg-zinc-800 text-zinc-300 hover:text-white"
-            }`}
-          >
-            <Flame className="w-4 h-4 text-amber-400" />
-            <span>Jadwal Sesi Personal Trainer</span>
-          </button>
-
-          <button
             onClick={() => {
               setDuplicateError(null);
               setActiveTab("membership");
@@ -487,192 +482,7 @@ export default function CustomerPortalPage() {
       )}
 
       {/* ============================================================================== */}
-      {/* TAB 2: JADWAL SESI PERSONAL TRAINER SAYA                                       */}
-      {/* ============================================================================== */}
-      {activeTab === "pt-schedule" && (
-        <div className="max-w-4xl mx-auto space-y-6 animate-in fade-in">
-          <div>
-            <h2 className="text-2xl font-black text-white flex items-center gap-2">
-              <Flame className="w-6 h-6 text-amber-400" />
-              <span>Jadwal & Kuota Sesi Personal Trainer</span>
-            </h2>
-            <p className="text-xs sm:text-sm text-zinc-400 mt-1">
-              Pantau kuota sesi latihan bersama coach Anda dan atur jadwal latihan langsung via WhatsApp resmi One O One Gym.
-            </p>
-          </div>
-
-          {/* Member Status Banner if Logged In */}
-          {displayMember ? (
-            <div className="p-4 sm:p-5 rounded-3xl bg-zinc-900 border border-zinc-700/80 flex flex-wrap items-center justify-between gap-4 shadow-xl">
-              <div className="flex items-center gap-3.5">
-                <div className="w-11 h-11 rounded-2xl bg-amber-400 text-gym-base font-black flex items-center justify-center text-sm shadow-md">
-                  {displayMember.full_name.charAt(0)}
-                </div>
-                <div>
-                  <div className="flex items-center gap-2">
-                    <span className="text-xs text-zinc-400">Akun Member:</span>
-                    <Badge variant={displayMember.status === "active" ? "success" : "warning"} size="sm">
-                      {displayMember.status === "active" ? "Member Aktif" : "Menunggu Approval"}
-                    </Badge>
-                  </div>
-                  <div className="text-base font-black text-white">{displayMember.full_name}</div>
-                  <div className="text-xs text-zinc-400 font-mono">{displayMember.member_code} • {displayMember.phone}</div>
-                </div>
-              </div>
-
-              <div className="text-right">
-                <div className="text-[11px] text-zinc-400 uppercase font-bold">Sisa Kuota PT Anda</div>
-                <div className="text-xl sm:text-2xl font-black text-amber-400">
-                  {displayMember.selected_coach_sessions || 12} Sesi Tersisa
-                </div>
-              </div>
-            </div>
-          ) : (
-            <div className="p-4 sm:p-5 rounded-3xl bg-zinc-900/90 border border-amber-500/30 flex flex-wrap items-center justify-between gap-4">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-2xl bg-amber-400/20 text-amber-400 flex items-center justify-center shrink-0">
-                  <Flame className="w-5 h-5" />
-                </div>
-                <div>
-                  <div className="text-sm font-black text-white">Sudah Punya Akun Member One O One Gym?</div>
-                  <div className="text-xs text-zinc-400">Masuk untuk melihat sisa kuota sesi PT dan pelatih pribadi Anda.</div>
-                </div>
-              </div>
-              <Button variant="neon" size="sm" onClick={() => setActiveTab("login")} className="text-xs font-black">
-                <LogIn className="w-3.5 h-3.5 mr-1" />
-                <span>Masuk Akun Member</span>
-              </Button>
-            </div>
-          )}
-
-          <div className="grid grid-cols-1 md:grid-cols-12 gap-6">
-            {/* Coach Profile Card */}
-            <div className="md:col-span-7 bg-gym-card border-2 border-zinc-800 rounded-3xl p-6 space-y-5">
-              <div className="flex items-start gap-4 pb-5 border-b border-zinc-800">
-                <img
-                  src={assignedCoach.photo_url}
-                  alt={assignedCoach.name}
-                  className="w-20 h-20 rounded-2xl object-cover ring-2 ring-amber-400/60 shadow-lg"
-                />
-                <div className="space-y-1">
-                  <span className="text-[10px] font-black uppercase tracking-wider bg-amber-400/20 text-amber-400 px-2 py-0.5 rounded">
-                    Personal Trainer Utama
-                  </span>
-                  <h3 className="text-lg font-black text-white leading-tight">{assignedCoach.name}</h3>
-                  <div className="text-xs font-semibold text-neon">{assignedCoach.specialty}</div>
-                  <div className="text-[11px] text-zinc-400 flex items-center gap-2 pt-0.5">
-                    <span className="flex items-center text-amber-400 font-bold gap-1">
-                      <Star className="w-3.5 h-3.5 fill-amber-400" />
-                      {assignedCoach.rating} / 5.0
-                    </span>
-                    <span>·</span>
-                    <span>{assignedCoach.experience}</span>
-                  </div>
-                </div>
-              </div>
-
-              {/* Sesi Status */}
-              <div className="grid grid-cols-2 gap-3">
-                <div className="p-4 rounded-2xl bg-zinc-900 border border-zinc-800">
-                  <div className="text-[11px] text-zinc-400 font-bold uppercase">Sisa Kuota Sesi</div>
-                  <div className="text-2xl font-black text-amber-400 mt-1">
-                    {displayMember?.selected_coach_sessions || 12} Sesi
-                  </div>
-                  <div className="text-[10px] text-zinc-500 mt-0.5">Tersedia untuk digunakan</div>
-                </div>
-
-                <div className="p-4 rounded-2xl bg-zinc-900 border border-zinc-800">
-                  <div className="text-[11px] text-zinc-400 font-bold uppercase">Jadwal Praktik</div>
-                  <div className="text-sm font-black text-white mt-1">
-                    {assignedCoach.available_days}
-                  </div>
-                  <div className="text-[10px] text-zinc-500 mt-0.5">Sesuai kesepakatan janji</div>
-                </div>
-              </div>
-
-              {/* Booking WhatsApp Action */}
-              <a
-                href={`https://wa.me/62895601800302?text=${encodeURIComponent(
-                  `Halo Coach ${assignedCoach.nickname} & Admin One O One Gym, saya member ${displayMember?.full_name || ""} (Kode: ${displayMember?.member_code || ""}). Saya ingin membuat janji temu sesi latihan Personal Trainer.`
-                )}`}
-                target="_blank"
-                rel="noreferrer"
-                className="w-full py-3 px-5 rounded-2xl bg-gradient-to-r from-neon to-orange-600 hover:from-orange-500 hover:to-orange-600 text-black font-black text-xs sm:text-sm flex items-center justify-center gap-2 shadow-lg transition-all"
-              >
-                <MessageCircle className="w-4 h-4" />
-                <span>Buat Janji Latihan via WhatsApp ({assignedCoach.nickname})</span>
-              </a>
-            </div>
-
-            {/* Workout Guidance & Program Focus */}
-            <div className="md:col-span-5 space-y-4">
-              <div className="bg-gym-card border border-zinc-800 rounded-3xl p-5 space-y-3">
-                <div className="text-xs font-black uppercase text-white flex items-center gap-2">
-                  <Target className="w-4 h-4 text-neon" />
-                  <span>Fokus Program Pelatihan Anda</span>
-                </div>
-                <div className="space-y-2 text-xs text-zinc-300">
-                  <div className="p-2.5 rounded-xl bg-zinc-900/80 border border-zinc-800 flex items-start gap-2">
-                    <Check className="w-4 h-4 text-neon shrink-0 mt-0.5" />
-                    <span>Penilaian postur & massa otot (*InBody Assessment*)</span>
-                  </div>
-                  <div className="p-2.5 rounded-xl bg-zinc-900/80 border border-zinc-800 flex items-start gap-2">
-                    <Check className="w-4 h-4 text-neon shrink-0 mt-0.5" />
-                    <span>Panduan teknik angkat beban aman & progresif</span>
-                  </div>
-                  <div className="p-2.5 rounded-xl bg-zinc-900/80 border border-zinc-800 flex items-start gap-2">
-                    <Check className="w-4 h-4 text-neon shrink-0 mt-0.5" />
-                    <span>Konsultasi target kalori & asupan protein harian</span>
-                  </div>
-                </div>
-              </div>
-
-              <div className="bg-zinc-900/90 border border-zinc-800 rounded-3xl p-5 space-y-2">
-                <div className="text-xs font-black text-white flex items-center gap-2">
-                  <Activity className="w-4 h-4 text-emerald-400" />
-                  <span>Aturan & Kebijakan Sesi PT</span>
-                </div>
-                <p className="text-[11px] text-zinc-400 leading-relaxed">
-                  Konfirmasi pembatalan sesi wajib dilakukan minimal 4 jam sebelum jadwal latihan dimulai. Pemotongan sesi dilakukan oleh staf/trainer di resepsionis.
-                </p>
-              </div>
-            </div>
-          </div>
-
-          {/* Roster of Certified Coaches */}
-          <div className="pt-4 space-y-4">
-            <h3 className="text-lg font-black text-white flex items-center gap-2">
-              <Users className="w-5 h-5 text-neon" />
-              <span>Tim Personal Trainer Bersertifikat One O One Gym</span>
-            </h3>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-              {coaches.map((c) => (
-                <div key={c.id} className="bg-gym-card border border-zinc-800 rounded-2xl p-4 space-y-3">
-                  <img
-                    src={c.photo_url}
-                    alt={c.name}
-                    className="w-full h-36 rounded-xl object-cover"
-                  />
-                  <div>
-                    <div className="text-sm font-black text-white">{c.name}</div>
-                    <div className="text-xs text-neon font-semibold">{c.specialty}</div>
-                    <div className="text-[11px] text-zinc-400 mt-1 flex items-center justify-between">
-                      <span className="flex items-center text-amber-400 gap-1 font-bold">
-                        <Star className="w-3 h-3 fill-amber-400" />
-                        {c.rating}
-                      </span>
-                      <span>{c.experience}</span>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* ============================================================================== */}
-      {/* TAB 3: DAFTAR MEMBER & PILIH COACH (DENGAN CEK DATA GANDA)                     */}
+      {/* TAB 2: DAFTAR MEMBER & PILIH COACH (DENGAN CEK DATA GANDA)                     */}
       {/* ============================================================================== */}
       {activeTab === "membership" && (
         <div className="space-y-8 animate-in fade-in">

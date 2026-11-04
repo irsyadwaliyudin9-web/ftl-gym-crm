@@ -283,7 +283,7 @@ export const OmnichannelPaymentModal: React.FC<OmnichannelPaymentModalProps> = (
                     onClick={() => setSelectedPtSessions(12)}
                     className={`py-2 px-3 rounded-xl text-xs font-bold border transition-all text-center ${
                       selectedPtSessions === 12
-                        ? "bg-amber-400 text-black border-amber-400 font-black shadow-md"
+                        ? "bg-neon text-black border-neon font-black shadow-neon"
                         : "bg-zinc-900 text-zinc-400 border-zinc-800"
                     }`}
                   >
@@ -297,12 +297,12 @@ export const OmnichannelPaymentModal: React.FC<OmnichannelPaymentModalProps> = (
                     onClick={() => setSelectedPtSessions(24)}
                     className={`py-2 px-3 rounded-xl text-xs font-bold border transition-all text-center ${
                       selectedPtSessions === 24
-                        ? "bg-amber-400 text-black border-amber-400 font-black shadow-md"
+                        ? "bg-neon text-black border-neon font-black shadow-neon"
                         : "bg-zinc-900 text-zinc-400 border-zinc-800"
                     }`}
                   >
                     <div className="font-black">24 Sesi ({formatRupiah(currentCoach.pt_rate_24)})</div>
-                    <div className="text-[9px] opacity-80 text-amber-300 font-bold">
+                    <div className="text-[9px] opacity-80 text-neon font-bold">
                       Diskon Hemat Paket
                     </div>
                   </button>
