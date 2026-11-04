@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { supabase, isLiveSupabaseConfigured } from "@/lib/supabaseClient";
 
 export const dynamic = "force-dynamic";
 
@@ -8,6 +9,62 @@ const CLOUD_API_URL = `https://api.restful-api.dev/objects/${CLOUD_SYNC_ID}`;
 // In-memory fallback in case of network latency
 let memoryMembers: any[] = [];
 let memoryTransactions: any[] = [];
+
+// Helper to sanitize member fields for Supabase table schema
+function sanitizeMemberForSupabase(m: any) {
+  return {
+    id: String(m.id),
+    tenant_id: m.tenant_id || "tenant-ftl",
+    club_id: m.club_id || "club-ftl-01",
+    member_code: m.member_code,
+    full_name: m.full_name,
+    phone: m.phone,
+    email: m.email || null,
+    photo_url: m.photo_url || null,
+    status: m.status || "pending_approval",
+    package_type: m.package_type || "1_month",
+    package_price: m.package_price || 0,
+    start_date: m.start_date || new Date().toISOString().slice(0, 10),
+    expiry_date: m.expiry_date || new Date().toISOString().slice(0, 10),
+    qr_code_data: m.qr_code_data || "",
+    notes: m.notes || null,
+    payment_proof_status: m.payment_proof_status || "pending",
+    rejection_reason: m.rejection_reason || null,
+    selected_coach_id: m.selected_coach_id || null,
+    selected_coach_name: m.selected_coach_name || null,
+    selected_coach_sessions: m.selected_coach_sessions || 0,
+    pt_sessions_remaining: m.pt_sessions_remaining || 0,
+    pt_sessions_used: m.pt_sessions_used || 0,
+    password: m.password || null,
+    created_at: m.created_at || new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+  };
+}
+
+function sanitizeTransactionForSupabase(t: any) {
+  return {
+    id: String(t.id),
+    tenant_id: t.tenant_id || "tenant-ftl",
+    club_id: t.club_id || "club-ftl-01",
+    member_id: String(t.member_id),
+    member_name: t.member_name || "",
+    member_phone: t.member_phone || "",
+    invoice_code: t.invoice_code || `INV-${Date.now()}`,
+    transaction_type: t.transaction_type || "membership",
+    title: t.title || "Transaksi Gym",
+    description: t.description || "",
+    amount: t.amount || 0,
+    payment_method: t.payment_method || "tunai",
+    payment_channel: t.payment_channel || "tunai_frontdesk",
+    status: t.status || "pending",
+    created_at: t.created_at || new Date().toISOString(),
+    expires_at: t.expires_at || new Date(Date.now() + 3600000).toISOString(),
+    paid_at: t.paid_at || null,
+    confirmed_by: t.confirmed_by || null,
+    details: t.details || {},
+    updated_at: new Date().toISOString(),
+  };
+}
 
 async function fetchFromCloud(): Promise<{ members: any[]; transactions: any[] }> {
   try {
@@ -53,9 +110,31 @@ async function saveToCloud(members: any[], transactions: any[]) {
 }
 
 export async function GET() {
+  // If Supabase live is configured, query directly
+  if (isLiveSupabaseConfigured()) {
+    try {
+      const [{ data: sbMembers, error: mErr }, { data: sbTx, error: txErr }] = await Promise.all([
+        supabase.from("members").select("*").order("created_at", { ascending: false }),
+        supabase.from("gym_transactions").select("*").order("created_at", { ascending: false }),
+      ]);
+
+      if (!mErr && Array.isArray(sbMembers) && sbMembers.length > 0) {
+        return NextResponse.json({
+          success: true,
+          source: "supabase",
+          members: sbMembers,
+          transactions: sbTx || [],
+        });
+      }
+    } catch (err) {
+      console.warn("Supabase fetch failed, falling back to restful cloud sync:", err);
+    }
+  }
+
   const data = await fetchFromCloud();
   return NextResponse.json({
     success: true,
+    source: "cloud-cache",
     members: data.members,
     transactions: data.transactions,
   });
@@ -90,6 +169,18 @@ export async function POST(req: Request) {
           ...updatedTransactions.filter((t) => t.id !== transaction.id),
         ];
       }
+
+      // Sync to live Supabase backend
+      if (isLiveSupabaseConfigured()) {
+        try {
+          await supabase.from("members").upsert(sanitizeMemberForSupabase(newMember));
+          if (transaction) {
+            await supabase.from("gym_transactions").upsert(sanitizeTransactionForSupabase(transaction));
+          }
+        } catch (sbErr) {
+          console.warn("Supabase registration sync warning:", sbErr);
+        }
+      }
     } else if (action === "approve" && memberId) {
       updatedMembers = updatedMembers.map((m) =>
         m.id === memberId
@@ -113,6 +204,26 @@ export async function POST(req: Request) {
             }
           : t
       );
+
+      // Sync approval to live Supabase backend
+      if (isLiveSupabaseConfigured()) {
+        try {
+          await supabase.from("members").update({
+            status: "active",
+            payment_proof_status: "approved",
+            updated_at: new Date().toISOString(),
+          }).eq("id", memberId);
+
+          await supabase.from("gym_transactions").update({
+            status: "paid",
+            paid_at: new Date().toISOString(),
+            confirmed_by: "Staf Admin One O One Gym",
+            updated_at: new Date().toISOString(),
+          }).eq("member_id", memberId).eq("status", "pending");
+        } catch (sbErr) {
+          console.warn("Supabase approval sync warning:", sbErr);
+        }
+      }
     } else if (action === "reject" && memberId) {
       updatedMembers = updatedMembers.map((m) =>
         m.id === memberId
@@ -124,6 +235,19 @@ export async function POST(req: Request) {
             }
           : m
       );
+
+      // Sync rejection to live Supabase backend
+      if (isLiveSupabaseConfigured()) {
+        try {
+          await supabase.from("members").update({
+            status: "rejected",
+            payment_proof_status: "rejected",
+            updated_at: new Date().toISOString(),
+          }).eq("id", memberId);
+        } catch (sbErr) {
+          console.warn("Supabase rejection sync warning:", sbErr);
+        }
+      }
     }
 
     await saveToCloud(updatedMembers, updatedTransactions);
