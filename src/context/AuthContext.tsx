@@ -14,7 +14,7 @@ interface AuthContextType {
   setCurrentMember: (member: Member | null) => void;
   loginStaff: (email: string, pass: string) => { success: boolean; message: string };
   logoutStaff: () => void;
-  loginMember: (identifier: string, pass?: string) => { success: boolean; member?: Member; message: string; isPendingApproval?: boolean };
+  loginMember: (identifier: string, pass?: string) => Promise<{ success: boolean; member?: Member; message: string; isPendingApproval?: boolean }>;
   registerMember: (data: { fullName: string; phone: string; email: string; password?: string; existingMember?: Member }) => { success: boolean; member?: Member; message: string; isPendingApproval?: boolean };
   logoutMember: () => void;
   loginAsRole: (role: UserRole) => void;
@@ -118,35 +118,77 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     } catch (e) {}
   };
 
-  const loginMember = (
+  const loginMember = async (
     identifier: string,
     pass?: string
-  ): { success: boolean; member?: Member; message: string; isPendingApproval?: boolean } => {
+  ): Promise<{ success: boolean; member?: Member; message: string; isPendingApproval?: boolean }> => {
     const clean = identifier.trim().toLowerCase();
     const cleanDigits = clean.replace(/[^0-9]/g, "");
 
-    // Try finding in localStorage state
-    let allMembers: Member[] = [];
+    // 1. Fetch latest state from cloud API (Live Supabase & Restful Cloud)
+    let cloudMembers: Member[] = [];
+    try {
+      const res = await fetch("/api/cloud-sync", {
+        cache: "no-store",
+        headers: { "Cache-Control": "no-cache" },
+      });
+      if (res.ok) {
+        const data = await res.json();
+        if (Array.isArray(data.members)) {
+          cloudMembers = data.members;
+        }
+      }
+    } catch (err) {
+      console.warn("Live cloud sync fetch before login failed:", err);
+    }
+
+    // 2. Read local state from both v4 and legacy keys
+    let localMembers: Member[] = [];
     if (typeof window !== "undefined") {
       try {
-        const raw = localStorage.getItem("fitlead_crm_state");
+        const v4 = localStorage.getItem("fitlead_crm_state_v4");
+        const raw = v4 || localStorage.getItem("fitlead_crm_state");
         if (raw) {
           const parsed = JSON.parse(raw);
-          if (parsed.members && Array.isArray(parsed.members)) {
-            allMembers = parsed.members;
+          if (Array.isArray(parsed.members)) {
+            localMembers = parsed.members;
           }
         }
       } catch (e) {}
     }
 
-    // Default fallback demo members if none yet in localStorage
+    // 3. Merge members: Cloud status takes absolute precedence over stale local state!
+    const memberMap = new Map<string, Member>();
+    // First local
+    localMembers.forEach((m) => {
+      memberMap.set(m.id, m);
+      const p = (m.phone || "").replace(/[^0-9]/g, "");
+      if (p) memberMap.set(`p:${p}`, m);
+      const e = (m.email || "").toLowerCase().trim();
+      if (e) memberMap.set(`e:${e}`, m);
+    });
+    // Then cloud (updates status to active if approved by staff)
+    cloudMembers.forEach((cm) => {
+      const p = (cm.phone || "").replace(/[^0-9]/g, "");
+      const e = (cm.email || "").toLowerCase().trim();
+      const existing = memberMap.get(cm.id) || (p ? memberMap.get(`p:${p}`) : null) || (e ? memberMap.get(`e:${e}`) : null);
+      const merged = existing ? { ...existing, ...cm } : cm;
+
+      memberMap.set(cm.id, merged);
+      if (p) memberMap.set(`p:${p}`, merged);
+      if (e) memberMap.set(`e:${e}`, merged);
+    });
+
+    let allMembers = Array.from(new Set(memberMap.values()));
+
+    // Fallback demo members if completely empty
     if (allMembers.length === 0) {
       allMembers = [
         {
           id: "mem-0801",
           tenant_id: "tenant-ftl",
           club_id: "club-ftl-01",
-          member_code: "FTL-0801",
+          member_code: "101-0801",
           full_name: "Arya Putra Perdana",
           phone: "+628123456001",
           email: "arya.perdana@gmail.com",
@@ -155,7 +197,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           package_price: 2200000,
           start_date: "2026-01-10",
           expiry_date: "2027-01-10",
-          qr_code_data: "FTL:FTL-0801:ARYA-PUTRA",
+          qr_code_data: "101:101-0801:ARYA-PUTRA",
           selected_coach_id: "coach-dian",
           selected_coach_name: "Coach Dian",
           selected_coach_sessions: 12,
@@ -164,14 +206,44 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       ];
     }
 
+    // Persist refreshed state to localStorage
+    if (typeof window !== "undefined" && allMembers.length > 0) {
+      try {
+        const updateStore = (key: string) => {
+          const existing = localStorage.getItem(key);
+          const parsed = existing ? JSON.parse(existing) : {};
+          parsed.members = allMembers;
+          localStorage.setItem(key, JSON.stringify(parsed));
+        };
+        updateStore("fitlead_crm_state_v4");
+        updateStore("fitlead_crm_state");
+      } catch (e) {}
+    }
+
+    // 4. Find matching member
     const matched = allMembers.find((m) => {
       const mEmail = (m.email || "").trim().toLowerCase();
-      const mPhone = m.phone.replace(/[^0-9]/g, "");
-      const mCode = m.member_code.trim().toLowerCase();
+      const mPhone = (m.phone || "").replace(/[^0-9]/g, "");
+      const mCode = (m.member_code || "").trim().toLowerCase();
+      const mCodeClean = mCode.replace(/[^a-z0-9]/g, "");
+      const mName = (m.full_name || "").trim().toLowerCase();
 
-      if (clean && mEmail === clean) return true;
-      if (cleanDigits && mPhone && mPhone.endsWith(cleanDigits)) return true;
-      if (clean && mCode === clean) return true;
+      // Check Email
+      if (clean && mEmail && mEmail === clean) return true;
+
+      // Check Member Code (e.g. "101-0818" or "1010818")
+      if (clean && mCode && (mCode === clean || (mCodeClean && mCodeClean === clean.replace(/[^a-z0-9]/g, "")))) return true;
+
+      // Check Phone Number: ONLY if input has 8 or more digits to avoid single digit false positives!
+      if (cleanDigits.length >= 8 && mPhone) {
+        if (mPhone === cleanDigits || mPhone.endsWith(cleanDigits.slice(-8)) || cleanDigits.endsWith(mPhone.slice(-8))) {
+          return true;
+        }
+      }
+
+      // Check Full Name
+      if (clean.length >= 3 && mName && mName === clean) return true;
+
       return false;
     });
 

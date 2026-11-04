@@ -1388,10 +1388,14 @@ export const GymDataProvider: React.FC<{ children: React.ReactNode }> = ({ child
               });
 
               try {
-                const saved = localStorage.getItem(LOCAL_STORAGE_KEY);
-                const parsed = saved ? JSON.parse(saved) : {};
-                parsed.members = updated;
-                localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(parsed));
+                const updateStore = (key: string) => {
+                  const saved = localStorage.getItem(key);
+                  const parsed = saved ? JSON.parse(saved) : {};
+                  parsed.members = updated;
+                  localStorage.setItem(key, JSON.stringify(parsed));
+                };
+                updateStore(LOCAL_STORAGE_KEY);
+                updateStore("fitlead_crm_state");
               } catch (e) {}
               return updated;
             }
@@ -1999,11 +2003,15 @@ export const GymDataProvider: React.FC<{ children: React.ReactNode }> = ({ child
     setTransactions((prev) => [regTx, ...prev]);
 
     try {
-      const saved = localStorage.getItem(LOCAL_STORAGE_KEY);
-      const parsed = saved ? JSON.parse(saved) : {};
-      parsed.members = updatedMembers;
-      parsed.transactions = [regTx, ...(parsed.transactions || [])];
-      localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(parsed));
+      const updateStore = (key: string) => {
+        const saved = localStorage.getItem(key);
+        const parsed = saved ? JSON.parse(saved) : {};
+        parsed.members = updatedMembers;
+        parsed.transactions = [regTx, ...(parsed.transactions || [])];
+        localStorage.setItem(key, JSON.stringify(parsed));
+      };
+      updateStore(LOCAL_STORAGE_KEY);
+      updateStore("fitlead_crm_state");
 
       if (typeof window !== "undefined" && "BroadcastChannel" in window) {
         const bc = new BroadcastChannel("ftl_gym_sync_v4");
@@ -2114,11 +2122,15 @@ export const GymDataProvider: React.FC<{ children: React.ReactNode }> = ({ child
     setTransactions((prev) => [regTx, ...prev]);
 
     try {
-      const saved = localStorage.getItem(LOCAL_STORAGE_KEY);
-      const parsed = saved ? JSON.parse(saved) : {};
-      parsed.members = updatedMembers;
-      parsed.transactions = [regTx, ...(parsed.transactions || [])];
-      localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(parsed));
+      const updateStore = (key: string) => {
+        const saved = localStorage.getItem(key);
+        const parsed = saved ? JSON.parse(saved) : {};
+        parsed.members = updatedMembers;
+        parsed.transactions = [regTx, ...(parsed.transactions || [])];
+        localStorage.setItem(key, JSON.stringify(parsed));
+      };
+      updateStore(LOCAL_STORAGE_KEY);
+      updateStore("fitlead_crm_state");
 
       if (typeof window !== "undefined" && "BroadcastChannel" in window) {
         const bc = new BroadcastChannel("ftl_gym_sync_v4");
@@ -2187,10 +2199,14 @@ export const GymDataProvider: React.FC<{ children: React.ReactNode }> = ({ child
     setMembers(updatedMembers);
 
     try {
-      const saved = localStorage.getItem(LOCAL_STORAGE_KEY);
-      const parsed = saved ? JSON.parse(saved) : {};
-      parsed.members = updatedMembers;
-      localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(parsed));
+      const updateStore = (key: string) => {
+        const saved = localStorage.getItem(key);
+        const parsed = saved ? JSON.parse(saved) : {};
+        parsed.members = updatedMembers;
+        localStorage.setItem(key, JSON.stringify(parsed));
+      };
+      updateStore(LOCAL_STORAGE_KEY);
+      updateStore("fitlead_crm_state");
 
       if (typeof window !== "undefined" && "BroadcastChannel" in window) {
         const bc = new BroadcastChannel("ftl_gym_sync_v4");

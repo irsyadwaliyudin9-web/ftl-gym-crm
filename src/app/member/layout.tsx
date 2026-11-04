@@ -8,8 +8,39 @@ import { LogOut, User, Bell, ShieldCheck, Clock, MessageCircle } from "lucide-re
 
 export default function MemberLayout({ children }: { children: React.ReactNode }) {
   const router = useRouter();
-  const { isMemberAuthenticated, currentMember, logoutMember } = useAuth();
+  const { isMemberAuthenticated, currentMember, setCurrentMember, logoutMember } = useAuth();
   const [isVerifying, setIsVerifying] = useState(true);
+
+  // Auto-refresh approval status from live cloud if currently pending
+  useEffect(() => {
+    if (!currentMember || (currentMember.status !== "pending_approval" && currentMember.payment_proof_status !== "pending")) return;
+
+    const interval = setInterval(async () => {
+      try {
+        const res = await fetch("/api/cloud-sync", { cache: "no-store", headers: { "Cache-Control": "no-cache" } });
+        if (res.ok) {
+          const data = await res.json();
+          if (Array.isArray(data.members)) {
+            const cleanPhone = (currentMember.phone || "").replace(/[^0-9]/g, "");
+            const cleanEmail = (currentMember.email || "").toLowerCase().trim();
+            const updated = data.members.find((m: any) =>
+              m.id === currentMember.id ||
+              (cleanEmail && m.email && m.email.toLowerCase().trim() === cleanEmail) ||
+              (cleanPhone.length >= 8 && m.phone && m.phone.replace(/[^0-9]/g, "").endsWith(cleanPhone.slice(-8)))
+            );
+            if (updated && updated.status === "active" && updated.payment_proof_status === "approved") {
+              setCurrentMember(updated);
+              try {
+                localStorage.setItem("ftl_member_session", JSON.stringify(updated));
+              } catch (e) {}
+            }
+          }
+        }
+      } catch (e) {}
+    }, 3000);
+
+    return () => clearInterval(interval);
+  }, [currentMember, setCurrentMember]);
 
   useEffect(() => {
     // Check if session exists in localStorage

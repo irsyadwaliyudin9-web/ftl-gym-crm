@@ -62,25 +62,28 @@ export default function SplitPortalAuthPage() {
   const [registeredPendingInfo, setRegisteredPendingInfo] = useState<{ name: string; code: string; phone: string } | null>(null);
 
   // Handle Member Login
-  const handleMemberLogin = (e: React.FormEvent) => {
+  const handleMemberLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMessage(null);
     setSuccessMessage(null);
     setIsLoading(true);
 
-    setTimeout(() => {
-      const res = loginMember(memberIdentifier, memberPassword);
+    try {
+      const res = await loginMember(memberIdentifier, memberPassword);
       setIsLoading(false);
 
       if (res.success) {
         setSuccessMessage(res.message);
         setTimeout(() => {
           router.push("/member/dashboard");
-        }, 400);
+        }, 300);
       } else {
         setErrorMessage(res.message);
       }
-    }, 400);
+    } catch (err) {
+      setIsLoading(false);
+      setErrorMessage("Terjadi kendala koneksi saat memverifikasi akun. Silakan coba kembali.");
+    }
   };
 
   // Handle Member Registration
@@ -161,16 +164,20 @@ export default function SplitPortalAuthPage() {
   };
 
   // Quick Demo Login for Arya Putra
-  const handleQuickDemoMember = () => {
+  const handleQuickDemoMember = async () => {
     setErrorMessage(null);
     setIsLoading(true);
-    setTimeout(() => {
-      const res = loginMember("arya.perdana@gmail.com");
+    try {
+      const res = await loginMember("arya.perdana@gmail.com");
       setIsLoading(false);
       if (res.success) {
         router.push("/member/dashboard");
+      } else {
+        setErrorMessage(res.message);
       }
-    }, 300);
+    } catch (e) {
+      setIsLoading(false);
+    }
   };
 
   return (

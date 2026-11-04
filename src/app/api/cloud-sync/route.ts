@@ -110,11 +110,11 @@ async function saveToCloud(members: any[], transactions: any[]) {
 }
 
 export async function GET() {
-  const data = await fetchFromCloud();
-  let mergedMembers = [...data.members];
-  let mergedTransactions = [...data.transactions];
+  let mergedMembers: any[] = [];
+  let mergedTransactions: any[] = [];
+  let fetchedFromSupabase = false;
 
-  // If Supabase live is configured, merge directly
+  // 1. Supabase Live Backend (Primary Single Source of Truth)
   if (isLiveSupabaseConfigured()) {
     try {
       const [{ data: sbMembers, error: mErr }, { data: sbTx, error: txErr }] = await Promise.all([
@@ -122,33 +122,52 @@ export async function GET() {
         supabase.from("gym_transactions").select("*").order("created_at", { ascending: false }),
       ]);
 
-      if (!mErr && Array.isArray(sbMembers) && sbMembers.length > 0) {
-        const memberMap = new Map<string, any>();
-        // First cloud members
-        mergedMembers.forEach((m) => {
-          memberMap.set(m.id, m);
-          const p = (m.phone || "").replace(/[^0-9]/g, "");
-          if (p) memberMap.set(p, m);
-        });
-        // Then Supabase members
-        sbMembers.forEach((sm: any) => {
-          memberMap.set(sm.id, sm);
-          const p = (sm.phone || "").replace(/[^0-9]/g, "");
-          if (p) memberMap.set(p, sm);
-        });
-        mergedMembers = Array.from(new Set(memberMap.values()));
+      if (!mErr && Array.isArray(sbMembers)) {
+        mergedMembers = sbMembers;
+        fetchedFromSupabase = true;
       }
-
-      if (!txErr && Array.isArray(sbTx) && sbTx.length > 0) {
-        const txMap = new Map<string, any>();
-        mergedTransactions.forEach((t) => txMap.set(t.id, t));
-        sbTx.forEach((st: any) => txMap.set(st.id, st));
-        mergedTransactions = Array.from(txMap.values());
+      if (!txErr && Array.isArray(sbTx)) {
+        mergedTransactions = sbTx;
       }
     } catch (err) {
-      console.warn("Supabase fetch/merge warning:", err);
+      console.warn("Supabase fetch warning:", err);
     }
   }
+
+  // 2. Fetch and merge secondary cloud cache
+  try {
+    const data = await fetchFromCloud();
+    if (Array.isArray(data.members) && data.members.length > 0) {
+      const memberMap = new Map<string, any>();
+
+      // First insert cloud cache members
+      data.members.forEach((m) => {
+        memberMap.set(m.id, m);
+        const p = (m.phone || "").replace(/[^0-9]/g, "");
+        if (p) memberMap.set(`phone:${p}`, m);
+        const e = (m.email || "").toLowerCase().trim();
+        if (e) memberMap.set(`email:${e}`, m);
+      });
+
+      // Then overwrite with Supabase members (highest priority)
+      mergedMembers.forEach((sm) => {
+        memberMap.set(sm.id, sm);
+        const p = (sm.phone || "").replace(/[^0-9]/g, "");
+        if (p) memberMap.set(`phone:${p}`, sm);
+        const e = (sm.email || "").toLowerCase().trim();
+        if (e) memberMap.set(`email:${e}`, sm);
+      });
+
+      mergedMembers = Array.from(new Set(memberMap.values()));
+    }
+
+    if (Array.isArray(data.transactions) && data.transactions.length > 0) {
+      const txMap = new Map<string, any>();
+      data.transactions.forEach((t) => txMap.set(t.id, t));
+      mergedTransactions.forEach((st) => txMap.set(st.id, st));
+      mergedTransactions = Array.from(txMap.values());
+    }
+  } catch (err) {}
 
   // Sort so pending members are always at the top!
   mergedMembers.sort((a, b) => {
@@ -160,7 +179,7 @@ export async function GET() {
 
   return NextResponse.json({
     success: true,
-    source: isLiveSupabaseConfigured() ? "supabase-merged" : "cloud-cache",
+    source: fetchedFromSupabase ? "supabase-live" : "cloud-cache",
     members: mergedMembers,
     transactions: mergedTransactions,
   });
@@ -211,16 +230,27 @@ export async function POST(req: Request) {
         }
       }
     } else if (action === "approve" && memberId) {
-      updatedMembers = updatedMembers.map((m) =>
-        m.id === memberId
-          ? {
-              ...m,
-              status: "active",
-              payment_proof_status: "approved",
-              approved_at: new Date().toISOString(),
-            }
-          : m
-      );
+      const targetMember = updatedMembers.find((m) => m.id === memberId);
+      const targetPhone = targetMember?.phone ? targetMember.phone.replace(/[^0-9]/g, "") : "";
+      const targetEmail = targetMember?.email ? targetMember.email.toLowerCase().trim() : "";
+
+      updatedMembers = updatedMembers.map((m) => {
+        const mPhone = (m.phone || "").replace(/[^0-9]/g, "");
+        const mEmail = (m.email || "").toLowerCase().trim();
+        const matchesId = m.id === memberId;
+        const matchesPhone = Boolean(targetPhone && mPhone && targetPhone === mPhone);
+        const matchesEmail = Boolean(targetEmail && mEmail && targetEmail === mEmail);
+
+        if (matchesId || matchesPhone || matchesEmail) {
+          return {
+            ...m,
+            status: "active",
+            payment_proof_status: "approved",
+            approved_at: new Date().toISOString(),
+          };
+        }
+        return m;
+      });
 
       // Also update any pending transactions for this member to paid
       updatedTransactions = updatedTransactions.map((t) =>
@@ -242,6 +272,21 @@ export async function POST(req: Request) {
             payment_proof_status: "approved",
             updated_at: new Date().toISOString(),
           }).eq("id", memberId);
+
+          if (targetPhone) {
+            await supabase.from("members").update({
+              status: "active",
+              payment_proof_status: "approved",
+              updated_at: new Date().toISOString(),
+            }).eq("phone", targetMember.phone);
+          }
+          if (targetEmail) {
+            await supabase.from("members").update({
+              status: "active",
+              payment_proof_status: "approved",
+              updated_at: new Date().toISOString(),
+            }).eq("email", targetEmail);
+          }
 
           await supabase.from("gym_transactions").update({
             status: "paid",
