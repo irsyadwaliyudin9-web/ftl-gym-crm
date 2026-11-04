@@ -106,7 +106,7 @@ export default function DashboardOverviewPage() {
 
       {/* NOTIFIKASI APPROVE & TOLAK PENDAFTARAN MEMBER ONLINE */}
       {pendingMembers.length > 0 ? (
-        <Card className="border-amber-500/80 bg-gradient-to-r from-amber-950/40 via-gym-card to-gym-elevated p-5 space-y-4 shadow-xl animate-in fade-in">
+        <Card id="pending-approval-section" className="border-amber-500/80 bg-gradient-to-r from-amber-950/40 via-gym-card to-gym-elevated p-5 space-y-4 shadow-xl animate-in fade-in scroll-mt-20">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-3 border-b border-amber-900/60">
             <div className="flex items-center gap-2.5">
               <div className="w-8 h-8 rounded-lg bg-amber-500/20 border border-amber-500/40 flex items-center justify-center text-amber-400">

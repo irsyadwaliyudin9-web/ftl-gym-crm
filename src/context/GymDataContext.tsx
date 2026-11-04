@@ -52,11 +52,11 @@ const SEED_CLUBS: Club[] = [
   {
     id: "club-ftl-01",
     tenant_id: "tenant-ftl",
-    name: "One O One Gym Jakarta Pusat (Pusat)",
-    code: "101-JKT",
-    address: "Jl. Senopati No. 88, Kebayoran Baru, Jakarta Selatan",
-    city: "Jakarta Selatan",
-    phone: "021-7278901",
+    name: "One O One Gym Garut Kota (Pusat)",
+    code: "101-GRT",
+    address: "Jl. Cimanuk No. 101, Garut Kota, Kabupaten Garut, Jawa Barat 44118",
+    city: "Garut Kota, Jawa Barat",
+    phone: "0262-234101",
     is_main_branch: true,
     created_at: "2026-01-01T08:00:00Z",
   },
@@ -1261,13 +1261,13 @@ export const GymDataProvider: React.FC<{ children: React.ReactNode }> = ({ child
   // Load from localStorage if present & preserve seed pending members
   useEffect(() => {
     try {
+      let loadedMembers: Member[] = [];
+
       const saved = localStorage.getItem(LOCAL_STORAGE_KEY);
       if (saved) {
         const parsed = JSON.parse(saved);
         if (parsed.members && Array.isArray(parsed.members)) {
-          const existingIds = new Set(parsed.members.map((m: Member) => m.id));
-          const seedPending = SEED_MEMBERS.filter((m) => m.status === "pending_approval" && !existingIds.has(m.id));
-          setMembers([...seedPending, ...parsed.members]);
+          loadedMembers = [...parsed.members];
         }
         if (parsed.checkIns) setCheckIns(parsed.checkIns);
         if (parsed.ptPackages) {
@@ -1291,6 +1291,46 @@ export const GymDataProvider: React.FC<{ children: React.ReactNode }> = ({ child
           setWeightliftingSessions(parsed.weightliftingSessions);
         }
       }
+
+      // Check legacy storage key for registrations made during migration
+      try {
+        const legacyRaw = localStorage.getItem("fitlead_crm_state");
+        if (legacyRaw) {
+          const parsedLegacy = JSON.parse(legacyRaw);
+          if (Array.isArray(parsedLegacy.members)) {
+            parsedLegacy.members.forEach((lm: Member) => {
+              if (!loadedMembers.some((m) => m.id === lm.id || (lm.phone && m.phone === lm.phone))) {
+                loadedMembers.unshift(lm);
+              }
+            });
+          }
+          if (Array.isArray(parsedLegacy.transactions)) {
+            setTransactions((prev) => {
+              const existingIds = new Set(prev.map((t) => t.id));
+              const missing = parsedLegacy.transactions.filter((t: any) => !existingIds.has(t.id));
+              return [...missing, ...prev];
+            });
+          }
+        }
+      } catch (e) {}
+
+      // Check current active member session
+      try {
+        const sessionRaw = localStorage.getItem("ftl_member_session");
+        if (sessionRaw) {
+          const sessionMem = JSON.parse(sessionRaw);
+          if (sessionMem && sessionMem.id) {
+            if (!loadedMembers.some((m) => m.id === sessionMem.id || (sessionMem.phone && m.phone === sessionMem.phone))) {
+              loadedMembers.unshift(sessionMem);
+            }
+          }
+        }
+      } catch (e) {}
+
+      const existingIds = new Set(loadedMembers.map((m: Member) => m.id));
+      const seedPending = SEED_MEMBERS.filter((m) => m.status === "pending_approval" && !existingIds.has(m.id));
+      const combinedMembers = [...seedPending, ...loadedMembers];
+      setMembers(combinedMembers);
     } catch (e) {
       console.warn("Could not read local state, using seed defaults", e);
     }

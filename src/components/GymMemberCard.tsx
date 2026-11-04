@@ -84,7 +84,7 @@ export const GymMemberCard: React.FC<GymMemberCardProps> = ({ member, onRefreshS
                 </span>
               </div>
               <div className="text-[11px] font-bold text-zinc-400 tracking-wider">
-                ONE O ONE FITNESS CLUB • JAKARTA
+                ONE O ONE FITNESS CLUB • GARUT KOTA, JAWA BARAT
               </div>
             </div>
           </div>

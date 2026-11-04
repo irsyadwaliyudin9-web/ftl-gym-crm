@@ -27,7 +27,7 @@ import {
 export default function SplitPortalAuthPage() {
   const router = useRouter();
   const { loginStaff, loginMember, registerMember } = useAuth();
-  const { members } = useGymData();
+  const { members, registerOnlineMember } = useGymData();
 
   // Mode: "member" (Pintu Konsumen) or "staff" (Pintu Staf)
   const [activePortal, setActivePortal] = useState<"member" | "staff">("member");
@@ -94,6 +94,17 @@ export default function SplitPortalAuthPage() {
     setIsLoading(true);
 
     setTimeout(() => {
+      // 1. Register into GymDataContext for Staff Dashboard & Reports
+      try {
+        registerOnlineMember({
+          full_name: regFullName.trim(),
+          phone: regPhone.trim(),
+          email: regEmail.trim(),
+          package_type: "1_month",
+        });
+      } catch (err) {}
+
+      // 2. Register into AuthContext for Member Session & Pass
       const res = registerMember({
         fullName: regFullName,
         phone: regPhone,
@@ -168,7 +179,7 @@ export default function SplitPortalAuthPage() {
               </span>
             </div>
             <div className="text-[11px] text-zinc-400 mt-0.5 font-medium">
-              One O One Fitness Club • Strength & Heavy Lifting
+              One O One Fitness Club • Garut Kota, Jawa Barat
             </div>
           </div>
         </div>

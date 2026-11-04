@@ -1,12 +1,12 @@
 {
-  "name": "FTL Gym - Faster Than Light",
-  "short_name": "FTL Gym",
-  "description": "Sistem CRM & Portal Member FTL Gym: Presensi QR Code, Pendaftaran Member Online, dan Jadwal Personal Trainer",
-  "start_url": "/portal",
+  "name": "One O One Gym (101 Gym)",
+  "short_name": "101 Gym",
+  "description": "Sistem CRM & Portal Member One O One Gym Garut Kota, Jawa Barat: Presensi QR Code, Pendaftaran Member Online, dan Personal Trainer",
+  "start_url": "/",
   "display": "standalone",
   "orientation": "portrait-primary",
   "background_color": "#0A0A0A",
-  "theme_color": "#0A0A0A",
+  "theme_color": "#FF6B00",
   "icons": [
     {
       "src": "/icon.svg",
@@ -18,9 +18,9 @@
   "categories": ["fitness", "lifestyle", "productivity"],
   "shortcuts": [
     {
-      "name": "Kartu Digital Member",
-      "url": "/portal",
-      "description": "Buka Kartu Pass dan QR Code FTL Gym"
+      "name": "Portal Member 101",
+      "url": "/member/dashboard",
+      "description": "Buka Kartu Pass dan QR Code One O One Gym"
     },
     {
       "name": "Dashboard Staf CRM",

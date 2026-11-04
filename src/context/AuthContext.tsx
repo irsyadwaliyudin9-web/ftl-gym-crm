@@ -207,7 +207,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       id: "mem-" + Date.now().toString(36),
       tenant_id: "tenant-ironforge",
       club_id: "club-jkt-01",
-      club_name: "One O One Gym Jakarta Pusat (Pusat)",
+      club_name: "One O One Gym Garut Kota (Pusat)",
       member_code: "101-" + Math.floor(1000 + Math.random() * 9000),
       full_name: cleanName,
       phone: cleanPhone,
@@ -235,47 +235,56 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       localStorage.setItem("ftl_member_session", JSON.stringify(newMember));
       localStorage.setItem("ftl_portal_member_id", newMember.id);
 
-      // Append to fitlead_crm_state permanently so it persists in Staff Dashboard
-      const raw = localStorage.getItem("fitlead_crm_state");
-      const parsed = raw ? JSON.parse(raw) : {};
-      if (!Array.isArray(parsed.members)) {
-        parsed.members = [];
-      }
-      parsed.members = [newMember, ...parsed.members.filter((m: Member) => m.id !== newMember.id)];
+      // Helper to update state in both v4 and legacy keys
+      const updateStorage = (key: string) => {
+        const raw = localStorage.getItem(key);
+        const parsed = raw ? JSON.parse(raw) : {};
+        if (!Array.isArray(parsed.members)) {
+          parsed.members = [];
+        }
+        parsed.members = [newMember, ...parsed.members.filter((m: Member) => m.id !== newMember.id)];
 
-      // Record pending registration transaction awaiting staff approval/cashier payment
-      if (!Array.isArray(parsed.transactions)) {
-        parsed.transactions = [];
-      }
-      const regTx = {
-        id: `tx-reg-${Date.now()}`,
-        member_id: newMember.id,
-        member_name: newMember.full_name,
-        member_phone: newMember.phone,
-        invoice_code: `INV-101-${Date.now().toString().slice(-6)}`,
-        transaction_type: "membership",
-        title: "Pendaftaran Member Baru One O One Gym (Menunggu Approval)",
-        description: `Pendaftaran baru ${newMember.full_name}. Menunggu verifikasi & persetujuan staf front desk One O One Gym.`,
-        amount: 250000,
-        payment_method: "tunai",
-        payment_channel: "frontdesk_cash",
-        status: "pending",
-        created_at: new Date().toISOString(),
-        expires_at: new Date(Date.now() + 3600000).toISOString(),
-        confirmed_by: undefined,
-        details: {
-          package_type: "1_month",
-        },
+        if (!Array.isArray(parsed.transactions)) {
+          parsed.transactions = [];
+        }
+        const regTx = {
+          id: `tx-reg-${Date.now()}`,
+          member_id: newMember.id,
+          member_name: newMember.full_name,
+          member_phone: newMember.phone,
+          invoice_code: `INV-101-${Date.now().toString().slice(-6)}`,
+          transaction_type: "membership",
+          title: "Pendaftaran Member Baru One O One Gym (Menunggu Approval)",
+          description: `Pendaftaran baru ${newMember.full_name}. Menunggu verifikasi & persetujuan staf front desk One O One Gym Garut Kota.`,
+          amount: 250000,
+          payment_method: "tunai",
+          payment_channel: "frontdesk_cash",
+          status: "pending",
+          created_at: new Date().toISOString(),
+          expires_at: new Date(Date.now() + 3600000).toISOString(),
+          confirmed_by: undefined,
+          details: {
+            package_type: "1_month",
+          },
+        };
+        parsed.transactions = [regTx, ...parsed.transactions];
+        localStorage.setItem(key, JSON.stringify(parsed));
+        return { members: parsed.members, transaction: regTx };
       };
-      parsed.transactions = [regTx, ...parsed.transactions];
 
-      localStorage.setItem("fitlead_crm_state", JSON.stringify(parsed));
+      const resV4 = updateStorage("fitlead_crm_state_v4");
+      updateStorage("fitlead_crm_state");
 
       // Broadcast real-time to Staff Dashboard in other tabs
       if (typeof window !== "undefined" && "BroadcastChannel" in window) {
         const bc = new BroadcastChannel("ftl_gym_sync_v4");
-        bc.postMessage({ type: "SYNC_MEMBERS", members: parsed.members, newMember });
-        bc.postMessage({ type: "SYNC_TRANSACTIONS", transaction: regTx });
+        bc.postMessage({
+          type: "SYNC_MEMBERS",
+          members: resV4.members,
+          newMember,
+          isNewRegistration: true,
+        });
+        bc.postMessage({ type: "SYNC_TRANSACTIONS", transaction: resV4.transaction });
         bc.close();
       }
     } catch (e) {}

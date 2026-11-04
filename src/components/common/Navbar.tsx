@@ -111,12 +111,12 @@ export const Navbar: React.FC = () => {
         {pendingMembersCount > 0 && (
           <Link
             href="/dashboard/members?filter=pending"
-            className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-amber-500/20 hover:bg-amber-500/30 border border-amber-500/40 text-amber-300 text-xs font-bold transition-all animate-pulse"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-amber-400 hover:bg-amber-300 text-black text-xs font-black transition-all shadow-lg shadow-amber-500/30 animate-pulse border-2 border-amber-300 active:scale-95"
             title={`${pendingMembersCount} Pendaftaran Member Online Menunggu Persetujuan Admin`}
           >
-            <span className="w-2 h-2 rounded-full bg-amber-400" />
+            <span className="w-2 h-2 rounded-full bg-rose-600 animate-ping" />
             <span className="hidden sm:inline">Persetujuan:</span>
-            <span>{pendingMembersCount} Pending</span>
+            <span>🚨 {pendingMembersCount} Pending</span>
           </Link>
         )}
 

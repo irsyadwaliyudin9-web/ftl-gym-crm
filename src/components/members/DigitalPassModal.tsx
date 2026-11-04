@@ -74,7 +74,7 @@ export const DigitalPassModal: React.FC<DigitalPassModalProps> = ({ member, isOp
               </div>
               <div>
                 <div className="text-xs font-black tracking-wider text-white">ONE O ONE GYM OFFICIAL PASS</div>
-                <div className="text-[10px] text-zinc-400">{member.club_name || "One O One Gym Jakarta Pusat"}</div>
+                <div className="text-[10px] text-zinc-400">{member.club_name || "One O One Gym Garut Kota"}</div>
               </div>
             </div>
 

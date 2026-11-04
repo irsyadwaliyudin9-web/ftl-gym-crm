@@ -55,7 +55,7 @@ export default function CustomerPortalLayout({ children }: { children: React.Rea
         <div className="max-w-6xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-3">
           <div className="flex items-center gap-2">
             <span className="w-2 h-2 rounded-full bg-neon animate-pulse" />
-            <span className="font-semibold text-zinc-400">One O One Gym Jakarta Pusat — Buka 24 Jam</span>
+            <span className="font-semibold text-zinc-400">One O One Gym Garut Kota, Jawa Barat — Buka 24 Jam</span>
           </div>
           <p>© 2026 One O One Gym (101 Gym). All Rights Reserved.</p>
         </div>
