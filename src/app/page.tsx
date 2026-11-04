@@ -97,35 +97,43 @@ export default function SplitPortalAuthPage() {
     setIsLoading(true);
 
     setTimeout(() => {
-      // 1. Register into GymDataContext for Staff Dashboard & Reports
-      try {
-        registerOnlineMember({
-          full_name: regFullName.trim(),
-          phone: regPhone.trim(),
-          email: regEmail.trim(),
-          package_type: "1_month",
-        });
-      } catch (err) {}
-
-      // 2. Register into AuthContext for Member Session & Pass
-      const res = registerMember({
-        fullName: regFullName,
-        phone: regPhone,
-        email: regEmail,
-        password: regPassword,
+      // 1. Call registerOnlineMember from GymDataContext as single source of truth
+      const regRes = registerOnlineMember({
+        full_name: regFullName.trim(),
+        phone: regPhone.trim(),
+        email: regEmail.trim(),
+        package_type: "1_month",
       });
+
       setIsLoading(false);
 
-      if (res.success) {
+      if (!regRes.success) {
+        if (regRes.duplicate && regRes.existingMember?.status === "active") {
+          setErrorMessage(regRes.message || "Nomor WhatsApp ini sudah terdaftar sebagai member aktif. Silakan pilih tab 'Masuk Akun'.");
+        } else {
+          setErrorMessage(regRes.message || "Gagal mendaftarkan akun. Silakan periksa kembali data Anda.");
+        }
+        return;
+      }
+
+      const registered = regRes.member;
+      if (registered) {
+        // Also register in AuthContext with the EXACT same member data
+        registerMember({
+          fullName: registered.full_name,
+          phone: registered.phone,
+          email: registered.email || "",
+          password: regPassword,
+          existingMember: registered,
+        });
+
         setRegisteredPendingInfo({
-          name: regFullName.trim(),
-          code: res.member?.member_code || "101-NEW",
-          phone: regPhone.trim(),
+          name: registered.full_name,
+          code: registered.member_code,
+          phone: registered.phone,
         });
         setSuccessMessage(null);
         setErrorMessage(null);
-      } else {
-        setErrorMessage(res.message);
       }
     }, 450);
   };

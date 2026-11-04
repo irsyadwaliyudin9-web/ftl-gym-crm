@@ -126,9 +126,9 @@ export default function DashboardOverviewPage() {
               </div>
             </div>
 
-            <Link href="/dashboard/members?filter=pending">
+            <Link href="/dashboard/approvals">
               <Button variant="ghost" size="sm" className="text-xs text-amber-400 hover:text-white">
-                <span>Kelola di Menu Member →</span>
+                <span>Kelola di Pusat Approval →</span>
               </Button>
             </Link>
           </div>

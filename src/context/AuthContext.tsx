@@ -15,7 +15,7 @@ interface AuthContextType {
   loginStaff: (email: string, pass: string) => { success: boolean; message: string };
   logoutStaff: () => void;
   loginMember: (identifier: string, pass?: string) => { success: boolean; member?: Member; message: string; isPendingApproval?: boolean };
-  registerMember: (data: { fullName: string; phone: string; email: string; password?: string }) => { success: boolean; member?: Member; message: string; isPendingApproval?: boolean };
+  registerMember: (data: { fullName: string; phone: string; email: string; password?: string; existingMember?: Member }) => { success: boolean; member?: Member; message: string; isPendingApproval?: boolean };
   logoutMember: () => void;
   loginAsRole: (role: UserRole) => void;
   logout: () => void;
@@ -214,15 +214,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     phone: string;
     email: string;
     password?: string;
+    existingMember?: Member;
   }): { success: boolean; member?: Member; message: string; isPendingApproval?: boolean } => {
     const cleanPhone = data.phone.trim();
     const cleanEmail = data.email.trim().toLowerCase();
     const cleanName = data.fullName.trim();
 
-    const newMember: Member = {
+    const newMember: Member = data.existingMember || {
       id: "mem-" + Date.now().toString(36),
-      tenant_id: "tenant-ironforge",
-      club_id: "club-jkt-01",
+      tenant_id: "tenant-ftl",
+      club_id: "club-ftl-01",
       club_name: "One O One Gym Garut Kota (Pusat)",
       member_code: "101-" + Math.floor(1000 + Math.random() * 9000),
       full_name: cleanName,

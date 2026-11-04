@@ -69,7 +69,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             </div>
           </div>
           <Link
-            href="/dashboard/members?filter=pending"
+            href="/dashboard/approvals"
             className="px-3.5 py-1.5 rounded-xl bg-black text-amber-300 hover:text-white hover:bg-zinc-900 text-xs font-black transition-all flex items-center gap-1.5 shadow-md active:scale-95 shrink-0"
           >
             <span>Tinjau & Setujui Sekarang ({pendingMembersCount})</span>

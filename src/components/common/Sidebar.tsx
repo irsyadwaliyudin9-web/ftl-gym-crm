@@ -13,13 +13,14 @@ import {
   Calendar,
   BarChart3,
   Settings,
+  Clock,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export const Sidebar: React.FC = () => {
   const pathname = usePathname();
   const { currentRole } = useAuth();
-  const { needsAttentionMembers, activeMembersCount } = useGymData();
+  const { needsAttentionMembers, activeMembersCount, pendingMembersCount } = useGymData();
 
   const navItems = [
     {
@@ -27,6 +28,13 @@ export const Sidebar: React.FC = () => {
       label: "Dashboard",
       icon: LayoutDashboard,
       badge: null,
+    },
+    {
+      href: "/dashboard/approvals",
+      label: "Menunggu Approval",
+      icon: Clock,
+      badge: pendingMembersCount > 0 ? `${pendingMembersCount} BARU` : null,
+      badgeColor: "bg-amber-500/20 text-amber-400 border border-amber-500/50 animate-pulse font-extrabold",
     },
     {
       href: "/dashboard/checkin",

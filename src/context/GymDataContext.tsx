@@ -1174,6 +1174,7 @@ interface GymDataContextType {
   needsAttentionMembers: Member[];
   pendingMembers: Member[];
   pendingMembersCount: number;
+  refreshFromCloud: () => Promise<void>;
 
   // Actions
   setCurrentClub: (club: Club) => void;
@@ -1337,57 +1338,90 @@ export const GymDataProvider: React.FC<{ children: React.ReactNode }> = ({ child
   }, []);
 
   // Cloud synchronization across devices (Mobile Phone <-> Staff PC)
+  const syncWithCloud = async () => {
+    try {
+      const res = await fetch("/api/cloud-sync", { cache: "no-store" });
+      if (res.ok) {
+        const data = await res.json();
+        if (Array.isArray(data.members) && data.members.length > 0) {
+          setMembers((prev) => {
+            let changed = false;
+            const prevMap = new Map<string, Member>();
+            const phoneToId = new Map<string, string>();
+
+            prev.forEach((m) => {
+              prevMap.set(m.id, m);
+              const p = (m.phone || "").replace(/[^0-9]/g, "");
+              if (p) phoneToId.set(p, m.id);
+            });
+
+            data.members.forEach((cm: Member) => {
+              const cmPhone = (cm.phone || "").replace(/[^0-9]/g, "");
+              const matchedId = prevMap.has(cm.id) ? cm.id : (cmPhone ? phoneToId.get(cmPhone) : null);
+
+              if (!matchedId) {
+                // New member from cloud - insert into map
+                prevMap.set(cm.id, cm);
+                if (cmPhone) phoneToId.set(cmPhone, cm.id);
+                changed = true;
+              } else {
+                const local = prevMap.get(matchedId);
+                if (
+                  local &&
+                  (local.status !== cm.status ||
+                    local.payment_proof_status !== cm.payment_proof_status ||
+                    (cm.status === "pending_approval" && local.status !== "pending_approval"))
+                ) {
+                  prevMap.set(matchedId, { ...local, ...cm });
+                  changed = true;
+                }
+              }
+            });
+
+            if (changed) {
+              // Ensure pending members always appear first!
+              const updated = Array.from(prevMap.values()).sort((a, b) => {
+                const aPending = a.status === "pending_approval" || a.payment_proof_status === "pending" ? 1 : 0;
+                const bPending = b.status === "pending_approval" || b.payment_proof_status === "pending" ? 1 : 0;
+                if (aPending !== bPending) return bPending - aPending;
+                return new Date(b.created_at || 0).getTime() - new Date(a.created_at || 0).getTime();
+              });
+
+              try {
+                const saved = localStorage.getItem(LOCAL_STORAGE_KEY);
+                const parsed = saved ? JSON.parse(saved) : {};
+                parsed.members = updated;
+                localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(parsed));
+              } catch (e) {}
+              return updated;
+            }
+            return prev;
+          });
+        }
+
+        if (Array.isArray(data.transactions) && data.transactions.length > 0) {
+          setTransactions((prev) => {
+            const existingIds = new Set(prev.map((t) => t.id));
+            const missing = data.transactions.filter((t: Transaction) => !existingIds.has(t.id));
+            if (missing.length > 0) {
+              return [...missing, ...prev];
+            }
+            return prev;
+          });
+        }
+      }
+    } catch (err) {}
+  };
+
+  const refreshFromCloud = async () => {
+    await syncWithCloud();
+  };
+
   useEffect(() => {
     if (typeof window === "undefined") return;
 
-    const syncWithCloud = async () => {
-      try {
-        const res = await fetch("/api/cloud-sync", { cache: "no-store" });
-        if (res.ok) {
-          const data = await res.json();
-          if (Array.isArray(data.members) && data.members.length > 0) {
-            setMembers((prev) => {
-              let changed = false;
-              const prevMap = new Map(prev.map((m) => [m.id, m]));
-
-              data.members.forEach((cm: Member) => {
-                const local = prevMap.get(cm.id);
-                if (!local || local.status !== cm.status) {
-                  prevMap.set(cm.id, cm);
-                  changed = true;
-                }
-              });
-
-              if (changed) {
-                const updated = Array.from(prevMap.values());
-                try {
-                  const saved = localStorage.getItem(LOCAL_STORAGE_KEY);
-                  const parsed = saved ? JSON.parse(saved) : {};
-                  parsed.members = updated;
-                  localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(parsed));
-                } catch (e) {}
-                return updated;
-              }
-              return prev;
-            });
-          }
-
-          if (Array.isArray(data.transactions) && data.transactions.length > 0) {
-            setTransactions((prev) => {
-              const existingIds = new Set(prev.map((t) => t.id));
-              const missing = data.transactions.filter((t: Transaction) => !existingIds.has(t.id));
-              if (missing.length > 0) {
-                return [...missing, ...prev];
-              }
-              return prev;
-            });
-          }
-        }
-      } catch (err) {}
-    };
-
     syncWithCloud();
-    const interval = setInterval(syncWithCloud, 4000);
+    const interval = setInterval(syncWithCloud, 3000);
     return () => clearInterval(interval);
   }, []);
 
@@ -1814,15 +1848,6 @@ export const GymDataProvider: React.FC<{ children: React.ReactNode }> = ({ child
       return false;
     });
 
-    if (existing) {
-      return {
-        success: false,
-        duplicate: true,
-        existingMember: existing,
-        message: `Nomor WhatsApp (${data.phone}) atau Email (${data.email || "-"}) sudah terdaftar atas nama "${existing.full_name}" (Kode Member: ${existing.member_code}). Anda tidak dapat mendaftar ganda. Silakan gunakan tombol Masuk Akun untuk membuka kartu dan jadwal latihan Anda.`,
-      };
-    }
-
     const prices: Record<string, number> = {
       "1_month": 250000,
       "6_months": 1200000,
@@ -1841,6 +1866,84 @@ export const GymDataProvider: React.FC<{ children: React.ReactNode }> = ({ child
 
     const startDate = new Date().toISOString().slice(0, 10);
     const expiryDate = new Date(Date.now() + validDays * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
+
+    if (existing) {
+      // If already pending approval: update their pending registration and float to top!
+      if (existing.status === "pending_approval" || existing.payment_proof_status === "pending") {
+        const updatedPending: Member = {
+          ...existing,
+          full_name: data.full_name || existing.full_name,
+          email: data.email || existing.email,
+          package_type: data.package_type || existing.package_type,
+          package_price: price,
+          selected_coach_id: data.selected_coach_id,
+          selected_coach_name: coaches.find((c) => c.id === data.selected_coach_id)?.name,
+          selected_coach_sessions: data.pt_sessions_count,
+          created_at: new Date().toISOString(),
+          status: "pending_approval",
+          payment_proof_status: "pending",
+        };
+        const updatedMembers = [updatedPending, ...members.filter((m) => m.id !== existing.id)];
+        setMembers(updatedMembers);
+
+        const regTx: Transaction = {
+          id: `tx-reg-${Date.now()}`,
+          tenant_id: currentTenant.id,
+          club_id: currentClub.id,
+          member_id: updatedPending.id,
+          member_name: updatedPending.full_name,
+          member_phone: updatedPending.phone,
+          invoice_code: `INV-101-${Date.now().toString().slice(-6)}`,
+          transaction_type: "membership",
+          title: `Pendaftaran Member Baru One O One Gym (${data.package_type.replace("_", " ")}${updatedPending.selected_coach_name ? ` + PT ${updatedPending.selected_coach_name}` : ""})`,
+          description: `Pendaftaran baru ${updatedPending.full_name}. Menunggu persetujuan staf front desk One O One Gym Garut Kota.`,
+          amount: price,
+          payment_method: "tunai",
+          payment_channel: "tunai_frontdesk",
+          status: "pending",
+          created_at: new Date().toISOString(),
+          expires_at: new Date(Date.now() + 3600000).toISOString(),
+          details: {
+            package_type: data.package_type,
+            coach_id: data.selected_coach_id,
+            coach_name: updatedPending.selected_coach_name,
+            sessions_count: data.pt_sessions_count,
+          },
+        };
+
+        try {
+          const saved = localStorage.getItem(LOCAL_STORAGE_KEY);
+          const parsed = saved ? JSON.parse(saved) : {};
+          parsed.members = updatedMembers;
+          parsed.transactions = [regTx, ...(parsed.transactions || [])];
+          localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(parsed));
+
+          if (typeof window !== "undefined" && "BroadcastChannel" in window) {
+            const bc = new BroadcastChannel("ftl_gym_sync_v4");
+            bc.postMessage({ type: "SYNC_MEMBERS", members: updatedMembers, newMember: updatedPending });
+            bc.postMessage({ type: "SYNC_TRANSACTIONS", transaction: regTx });
+            bc.close();
+          }
+
+          if (typeof window !== "undefined") {
+            fetch("/api/cloud-sync", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ action: "register", member: updatedPending, transaction: regTx }),
+            }).catch(() => {});
+          }
+        } catch (e) {}
+
+        return { success: true, member: updatedPending, duplicate: false, message: "Pendaftaran diperbarui dan sedang menunggu approval staf One O One Gym." };
+      }
+
+      return {
+        success: false,
+        duplicate: true,
+        existingMember: existing,
+        message: `Nomor WhatsApp (${data.phone}) atau Email (${data.email || "-"}) sudah terdaftar atas nama "${existing.full_name}" (Kode Member: ${existing.member_code}). Akun Anda sudah terdaftar dan aktif. Silakan gunakan tombol Masuk Akun.`,
+      };
+    }
 
     const newMember: Member = {
       id: `mem-${Date.now()}`,
@@ -1866,18 +1969,46 @@ export const GymDataProvider: React.FC<{ children: React.ReactNode }> = ({ child
       selected_coach_sessions: data.pt_sessions_count,
     };
 
+    const regTx: Transaction = {
+      id: `tx-reg-${Date.now()}`,
+      tenant_id: currentTenant.id,
+      club_id: currentClub.id,
+      member_id: newMember.id,
+      member_name: newMember.full_name,
+      member_phone: newMember.phone,
+      invoice_code: `INV-101-${Date.now().toString().slice(-6)}`,
+      transaction_type: "membership",
+      title: `Pendaftaran Member Baru One O One Gym (${data.package_type.replace("_", " ")}${newMember.selected_coach_name ? ` + PT ${newMember.selected_coach_name}` : ""})`,
+      description: `Permohonan pendaftaran member baru ${newMember.full_name}. Menunggu persetujuan staf front desk One O One Gym Garut Kota.`,
+      amount: price,
+      payment_method: "tunai",
+      payment_channel: "tunai_frontdesk",
+      status: "pending",
+      created_at: new Date().toISOString(),
+      expires_at: new Date(Date.now() + 3600000).toISOString(),
+      details: {
+        package_type: data.package_type,
+        coach_id: data.selected_coach_id,
+        coach_name: newMember.selected_coach_name,
+        sessions_count: data.pt_sessions_count,
+      },
+    };
+
     const updatedMembers = [newMember, ...members];
     setMembers(updatedMembers);
+    setTransactions((prev) => [regTx, ...prev]);
 
     try {
       const saved = localStorage.getItem(LOCAL_STORAGE_KEY);
       const parsed = saved ? JSON.parse(saved) : {};
       parsed.members = updatedMembers;
+      parsed.transactions = [regTx, ...(parsed.transactions || [])];
       localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(parsed));
 
       if (typeof window !== "undefined" && "BroadcastChannel" in window) {
         const bc = new BroadcastChannel("ftl_gym_sync_v4");
         bc.postMessage({ type: "SYNC_MEMBERS", members: updatedMembers, newMember });
+        bc.postMessage({ type: "SYNC_TRANSACTIONS", transaction: regTx });
         bc.close();
       }
 
@@ -1886,7 +2017,7 @@ export const GymDataProvider: React.FC<{ children: React.ReactNode }> = ({ child
         fetch("/api/cloud-sync", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ action: "register", member: newMember }),
+          body: JSON.stringify({ action: "register", member: newMember, transaction: regTx }),
         }).catch(() => {});
       }
     } catch (e) {}
@@ -2514,6 +2645,7 @@ export const GymDataProvider: React.FC<{ children: React.ReactNode }> = ({ child
         needsAttentionMembers,
         pendingMembers,
         pendingMembersCount,
+        refreshFromCloud,
         setCurrentClub,
         checkInMember,
         deductPTSession,

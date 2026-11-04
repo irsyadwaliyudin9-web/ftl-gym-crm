@@ -1,6 +1,7 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, Suspense } from "react";
+import { useSearchParams } from "next/navigation";
 import { useGymData } from "@/context/GymDataContext";
 import { Member, MemberStatus } from "@/lib/types";
 import { formatRupiah, formatWIBDate, getDaysRemaining, isExpiringSoon } from "@/lib/utils";
@@ -23,11 +24,15 @@ import { Button } from "@/components/ui/Button";
 import { DigitalPassModal } from "@/components/members/DigitalPassModal";
 import { MemberFormModal } from "@/components/members/MemberFormModal";
 
-export default function MembersCRMPage() {
+function MembersCRMContent() {
   const { members, currentClub, addMember, exportMembersCSV, approveMember, rejectMember, pendingMembersCount } = useGymData();
+  const searchParams = useSearchParams();
+  const filterParam = searchParams.get("filter");
 
   const [searchQuery, setSearchQuery] = useState("");
-  const [statusFilter, setStatusFilter] = useState<"all" | MemberStatus | "expiring" | "pending">("all");
+  const [statusFilter, setStatusFilter] = useState<"all" | MemberStatus | "expiring" | "pending">(
+    filterParam === "pending" ? "pending" : "all"
+  );
   const [selectedPassMember, setSelectedPassMember] = useState<Member | null>(null);
   const [isPassModalOpen, setIsPassModalOpen] = useState(false);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
@@ -295,7 +300,7 @@ export default function MembersCRMPage() {
 
               {/* Action Buttons Row */}
               <div className="flex items-center gap-2 pt-2 border-t border-zinc-800/80">
-                {member.status === "pending_approval" ? (
+                {member.status === "pending_approval" || member.payment_proof_status === "pending" ? (
                   <>
                     <button
                       onClick={() => handleReject(member.id)}
@@ -309,7 +314,7 @@ export default function MembersCRMPage() {
                       className="flex-1 py-1.5 px-3 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs transition-all shadow-sm flex items-center justify-center gap-1"
                     >
                       <CheckCircle2 className="w-3.5 h-3.5" />
-                      <span>Setujui</span>
+                      <span>Setujui (Approve)</span>
                     </button>
                   </>
                 ) : (
@@ -359,5 +364,13 @@ export default function MembersCRMPage() {
         onSubmit={handleAddMemberSubmit}
       />
     </div>
+  );
+}
+
+export default function MembersCRMPage() {
+  return (
+    <Suspense fallback={<div className="p-8 text-center text-xs text-zinc-500">Memuat data member CRM...</div>}>
+      <MembersCRMContent />
+    </Suspense>
   );
 }

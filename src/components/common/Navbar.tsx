@@ -110,7 +110,7 @@ export const Navbar: React.FC = () => {
         {/* Pending Approval Online Registrations Pill */}
         {pendingMembersCount > 0 && (
           <Link
-            href="/dashboard/members?filter=pending"
+            href="/dashboard/approvals"
             className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-amber-400 hover:bg-amber-300 text-black text-xs font-black transition-all shadow-lg shadow-amber-500/30 animate-pulse border-2 border-amber-300 active:scale-95"
             title={`${pendingMembersCount} Pendaftaran Member Online Menunggu Persetujuan Admin`}
           >

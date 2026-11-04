@@ -110,7 +110,11 @@ async function saveToCloud(members: any[], transactions: any[]) {
 }
 
 export async function GET() {
-  // If Supabase live is configured, query directly
+  const data = await fetchFromCloud();
+  let mergedMembers = [...data.members];
+  let mergedTransactions = [...data.transactions];
+
+  // If Supabase live is configured, merge directly
   if (isLiveSupabaseConfigured()) {
     try {
       const [{ data: sbMembers, error: mErr }, { data: sbTx, error: txErr }] = await Promise.all([
@@ -119,24 +123,46 @@ export async function GET() {
       ]);
 
       if (!mErr && Array.isArray(sbMembers) && sbMembers.length > 0) {
-        return NextResponse.json({
-          success: true,
-          source: "supabase",
-          members: sbMembers,
-          transactions: sbTx || [],
+        const memberMap = new Map<string, any>();
+        // First cloud members
+        mergedMembers.forEach((m) => {
+          memberMap.set(m.id, m);
+          const p = (m.phone || "").replace(/[^0-9]/g, "");
+          if (p) memberMap.set(p, m);
         });
+        // Then Supabase members
+        sbMembers.forEach((sm: any) => {
+          memberMap.set(sm.id, sm);
+          const p = (sm.phone || "").replace(/[^0-9]/g, "");
+          if (p) memberMap.set(p, sm);
+        });
+        mergedMembers = Array.from(new Set(memberMap.values()));
+      }
+
+      if (!txErr && Array.isArray(sbTx) && sbTx.length > 0) {
+        const txMap = new Map<string, any>();
+        mergedTransactions.forEach((t) => txMap.set(t.id, t));
+        sbTx.forEach((st: any) => txMap.set(st.id, st));
+        mergedTransactions = Array.from(txMap.values());
       }
     } catch (err) {
-      console.warn("Supabase fetch failed, falling back to restful cloud sync:", err);
+      console.warn("Supabase fetch/merge warning:", err);
     }
   }
 
-  const data = await fetchFromCloud();
+  // Sort so pending members are always at the top!
+  mergedMembers.sort((a, b) => {
+    const aPending = a.status === "pending_approval" || a.payment_proof_status === "pending" ? 1 : 0;
+    const bPending = b.status === "pending_approval" || b.payment_proof_status === "pending" ? 1 : 0;
+    if (aPending !== bPending) return bPending - aPending;
+    return new Date(b.created_at || 0).getTime() - new Date(a.created_at || 0).getTime();
+  });
+
   return NextResponse.json({
     success: true,
-    source: "cloud-cache",
-    members: data.members,
-    transactions: data.transactions,
+    source: isLiveSupabaseConfigured() ? "supabase-merged" : "cloud-cache",
+    members: mergedMembers,
+    transactions: mergedTransactions,
   });
 }
 
@@ -157,10 +183,13 @@ export async function POST(req: Request) {
         payment_proof_status: "pending",
         created_at: member.created_at || new Date().toISOString(),
       };
+      const cleanPhone = (newMember.phone || "").replace(/[^0-9]/g, "");
       // Upsert: replace if existing phone or id
       updatedMembers = [
         newMember,
-        ...updatedMembers.filter((m) => m.id !== newMember.id && m.phone !== newMember.phone),
+        ...updatedMembers.filter(
+          (m) => m.id !== newMember.id && (m.phone || "").replace(/[^0-9]/g, "") !== cleanPhone
+        ),
       ];
 
       if (transaction) {
